@@ -28,23 +28,33 @@ THE SOFTWARE.
     <j:set var="history" value="${from.getHistory()}"/>        
     <j:if test="${history.historyAvailable()}">
     <j:set var="covResult" value="${history.getCoverageResult()}"/>        
-    <j:set var="url" value="${from.urlName}/history"/>        
-    <div class="test-trend-caption" title="${covResult.coverageId}">
-        ${from.displayName}
+    <j:set var="url" value="${from.urlName}/history"/>
+    <j:set var="uniqueid" value="${h.generateId()}"/> 
+    <div id="coverage-${uniqueid}">       
+        <div class="test-trend-caption" title="${covResult.coverageId}">
+            ${from.displayName}
+        </div>
+        <div align="center">
+            <st:include from="${history}" it="${history}" page="coverage-graph.jelly" /> 
+        </div>
+        <div style="text-align:right">
+            <a href="${from.urlName}/?width=800&amp;height=600">enlarge</a>
+        </div>
+        <div align="center">
+        <st:include from="${history}" it="${history}" page="attribute-graph.jelly" /> 
+        </div>
+        <j:if test="${!history.getTrendableAttributes().isEmpty()}"> 
+           <div style="text-align:right">
+               <a href="${from.urlName}/?width=800&amp;height=600&amp;attributes=1">enlarge</a>
+           </div>
+        </j:if>
     </div>
-    <div align="center">
-        <st:include from="${history}" it="${history}" page="coverage-graph.jelly" /> 
-    </div>
-    <div style="text-align:right">
-        <a href="${from.urlName}/?width=800&amp;height=600">enlarge</a>
-    </div>
-    <div align="center">
-    <st:include from="${history}" it="${history}" page="attribute-graph.jelly" /> 
-    </div>
-    <j:if test="${!history.getTrendableAttributes().isEmpty()}"> 
-       <div style="text-align:right">
-           <a href="${from.urlName}/?width=800&amp;height=600&amp;attributes=1">enlarge</a>
-       </div>
-    </j:if>
+    <script>
+          document.addEventListener("DOMContentLoaded",function(){
+          	onload();
+          	var cov =document.getElementById("coverage-${uniqueid}");
+          	cov.parentNode.appendChild(cov);
+          });
+    </script>
     </j:if>
 </j:jelly>
