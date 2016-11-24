@@ -26,8 +26,8 @@ package com.mentor.questa.vrm.jenkins;
 import hudson.AbortException;
 import hudson.FilePath;
 import hudson.Util;
-import hudson.model.AbstractBuild;
-import hudson.model.BuildListener;
+import hudson.model.Run;
+import hudson.model.TaskListener;
 import hudson.remoting.VirtualChannel;
 import hudson.tasks.junit.TestResult;
 import hudson.tasks.junit.TestResultAction;
@@ -43,17 +43,11 @@ import org.apache.tools.ant.types.FileSet;
  *
  */
 public class QuestaVrmJunitProcessor  implements Serializable {
-    private FilePath getWorkspace(AbstractBuild build) {
-        FilePath workspace = build.getWorkspace();
-        if (workspace == null) {
-            workspace = build.getProject().getSomeWorkspace();
-        }
-        return workspace;
+   
+    public void perform(Run build, FilePath workspace, TaskListener listener, PrintStream logger) throws IOException, InterruptedException{
+        recordTestResult(build,workspace, listener, logger);
     }
-    public void perform(AbstractBuild<?, ?> build, BuildListener listener, PrintStream logger) throws IOException, InterruptedException{
-        recordTestResult(build, listener, logger);
-    }
-    private TestResult recordTestResult(AbstractBuild<?, ?> build, BuildListener listener, PrintStream logger) throws IOException, InterruptedException {
+    private TestResult recordTestResult(Run build, FilePath workspace, TaskListener listener, PrintStream logger) throws IOException, InterruptedException {
         TestResultAction existingAction = build.getAction(TestResultAction.class);
         final long buildTime = build.getTimestamp().getTimeInMillis();
         final long nowMaster = System.currentTimeMillis();
@@ -64,7 +58,7 @@ public class QuestaVrmJunitProcessor  implements Serializable {
             existingTestResults = existingAction.getResult();
         }
 
-        TestResult result = getTestResult(build, "*.xml", existingTestResults, buildTime, nowMaster);
+        TestResult result = getTestResult(workspace, "*.xml", existingTestResults, buildTime, nowMaster);
         if (result != null) {
             TestResultAction action;
             if (existingAction == null) {
@@ -85,13 +79,13 @@ public class QuestaVrmJunitProcessor  implements Serializable {
         return result;
     }
 
-    private TestResult getTestResult(final AbstractBuild<?, ?> build,
+    private TestResult getTestResult(final FilePath workspace,
             final String junitFilePattern,
             final TestResult existingTestResults,
             final long buildTime, final long nowMaster)
             throws IOException, InterruptedException {
 
-        return getWorkspace(build).act(new jenkins.SlaveToMasterFileCallable<TestResult>() {
+        return workspace.act(new jenkins.SlaveToMasterFileCallable<TestResult>() {
             @Override
             public TestResult invoke(File ws, VirtualChannel channel) throws IOException {
                 final long nowSlave = System.currentTimeMillis();

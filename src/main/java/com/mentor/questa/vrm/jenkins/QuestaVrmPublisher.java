@@ -56,6 +56,8 @@ import java.util.Collections;
 import java.util.List;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
+import jenkins.tasks.SimpleBuildStep;
+import org.jenkinsci.Symbol;
 import net.sf.json.JSONObject;
 
 import org.apache.commons.io.output.ByteArrayOutputStream;
@@ -70,7 +72,7 @@ import org.kohsuke.stapler.StaplerRequest;
  *
  *
  */
-public class QuestaVrmPublisher extends Recorder {
+public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
 
     static final String TMP_DIRECTORY = "questaVrm-temporary",
             HTML_ARCHIVE_DIR = "questavrmhtmlreport",
@@ -132,7 +134,7 @@ public class QuestaVrmPublisher extends Recorder {
         return workspace;
     }
 
-    private void processTestDataPublishers(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener, QuestaVrmRegressionResult regressionResult) throws IOException, InterruptedException {
+    private void processTestDataPublishers(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, QuestaVrmRegressionResult regressionResult) throws IOException, InterruptedException {
         TestResultAction action = build.getAction(TestResultAction.class);
         if (action == null) {
             return;
@@ -140,7 +142,7 @@ public class QuestaVrmPublisher extends Recorder {
         List<TestResultAction.Data> testData = new ArrayList<TestResultAction.Data>();
 
         if (isCollectCoverage()) {
-            QuestaCoverageTestDataPublisher.Data d = (QuestaCoverageTestDataPublisher.Data) QuestaCoverageTestDataPublisher.getTestData(regressionResult.getMergeFiles(), resolveParametersInString(build, listener, getVrunExec()), build, launcher, listener, action.getResult());
+            QuestaCoverageTestDataPublisher.Data d = (QuestaCoverageTestDataPublisher.Data) QuestaCoverageTestDataPublisher.getTestData(regressionResult.getMergeFiles(), resolveParametersInString(build, listener, getVrunExec()), build, workspace, launcher, listener, action.getResult());
             if (d != null) {
                 testData.add(d);
             }
@@ -148,7 +150,7 @@ public class QuestaVrmPublisher extends Recorder {
         }
 
         for (TestDataPublisher testPub : getTestDataPublishers()) {
-            TestResultAction.Data d = testPub.contributeTestData(build, getWorkspace(build), launcher, listener, action.getResult());
+            TestResultAction.Data d = testPub.contributeTestData(build, workspace, launcher, listener, action.getResult());
 
             if (d != null) {
                 testData.add(d);
@@ -159,7 +161,7 @@ public class QuestaVrmPublisher extends Recorder {
 
     }
 
-    private String constructCmdString(AbstractBuild<?, ?> build, BuildListener listener) {
+    private String constructCmdString(Run build, TaskListener listener) {
         String expandedVrmData = resolveParametersInString(build, listener, vrmdata);
 
         // Workaround for vrm windows path bug
@@ -178,7 +180,7 @@ public class QuestaVrmPublisher extends Recorder {
         return cmd;
     }
 
-    private void addVrmBuildActions(AbstractBuild<?, ?> build, BuildListener listener, QuestaVrmRegressionResult regressionResult) {
+    private void addVrmBuildActions(Run  build, TaskListener listener, QuestaVrmRegressionResult regressionResult) {
         QuestaVrmRegressionBuildAction regressionAction = new QuestaVrmRegressionBuildAction(build, isHtmlReport());
         regressionAction.setResult(regressionResult, listener);
         build.addAction(regressionAction);
@@ -193,7 +195,7 @@ public class QuestaVrmPublisher extends Recorder {
         return targetDir;
     }
    
-    private void archiveHTMLReport( AbstractBuild<?, ?> build, BuildListener listener, FilePath fromDir, String src,  String target) throws IOException, InterruptedException {
+    private void archiveHTMLReport( Run<?, ?> build, TaskListener listener, FilePath fromDir, String src,  String target) throws IOException, InterruptedException {
         listener.getLogger().println("Archiving  VRM HTML report...");
 
         FilePath archiveDir = new FilePath(getOrCreateDir(build.getParent().getRootDir(), target));
@@ -211,10 +213,8 @@ public class QuestaVrmPublisher extends Recorder {
     }
 
     @Override
-    public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws IOException, InterruptedException {
-        if (!(build instanceof Build)) {
-            return true;
-        }
+    public void perform(Run<?,?> build, FilePath workspace ,Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
+
 
         listener.getLogger().println("Recording VRM results...");
 
@@ -223,32 +223,32 @@ public class QuestaVrmPublisher extends Recorder {
             String cmd = constructCmdString(build, listener);
             try {
                 ProcStarter ps = launcher.launch();
-                ps.cmds(Util.tokenize(cmd)).envs(build.getEnvironment(listener)).stdin(null).stdout(new ByteArrayOutputStream()).pwd(getWorkspace(build));
+                ps.cmds(Util.tokenize(cmd)).envs(build.getEnvironment(listener)).stdin(null).stdout(new ByteArrayOutputStream()).pwd(workspace);
                 ps.quiet(true);
                 Proc proc = launcher.launch(ps);
                 proc.join();
 
             } catch (IOException e) {
                 listener.getLogger().println("[ERROR]: Vrun executable \'" + getVrunExec() + "\' not found. Aborting storing VRM results. ");
-                return false;
+                return ;
             }
             QuestaVrmRegressionResult regressionResult;
             try {
-                regressionResult = (QuestaVrmRegressionResult) new QuestaVrmResultsParser().parse(getVrmdata(), build, launcher, listener);
+                regressionResult = (QuestaVrmRegressionResult) new QuestaVrmResultsParser().parseResult(getVrmdata(), build, workspace,  launcher, listener);
             } catch (AbortException a) {
                 listener.getLogger().println("[ERROR]: No report found from command \'" + cmd + "\', please recheck your configuration. Aborting storing VRM results.");
-                return false;
+                return ;
             }
 
             QuestaVrmJunitProcessor vrmProcessor = new QuestaVrmJunitProcessor();
 
-            vrmProcessor.perform(build, listener, listener.getLogger());
+            vrmProcessor.perform(build, workspace, listener, listener.getLogger());
 
             // Add VRM build action(s)
             addVrmBuildActions(build, listener, regressionResult);
 
             if (isHtmlReport()) {
-                FilePath vrmHtmlDir = getWorkspace(build).child(getVrmhtmldir());
+                FilePath vrmHtmlDir = workspace.child(getVrmhtmldir());
                 archiveHTMLReport(build,listener, vrmHtmlDir, getVrmhtmldir(), HTML_ARCHIVE_DIR);
                 
                 // Process Coverage HTML reports if necessary 
@@ -258,13 +258,13 @@ public class QuestaVrmPublisher extends Recorder {
                    
                    FilePath covHtmlDirPath = vrmHtmlDir.child(covHtmlDir);
                     if (!covHtmlDirPath.exists()) {
-                         archiveHTMLReport(build,listener, getWorkspace(build).child(covHtmlDir), covHtmlDir, COV_ARCHIVE_DIR);
+                         archiveHTMLReport(build,listener, workspace.child(covHtmlDir), covHtmlDir, COV_ARCHIVE_DIR);
                     }
                 }
             }
             
             // process data publishers
-            processTestDataPublishers(build, launcher, listener, regressionResult);
+            processTestDataPublishers(build, workspace, launcher, listener, regressionResult);
 
             // Adjust build result if any of the regression actions failed
             if (build.getResult() == null || (build.getResult().isBetterThan(Result.UNSTABLE)
@@ -273,17 +273,17 @@ public class QuestaVrmPublisher extends Recorder {
             }
 
             listener.getLogger().println("Recording finished.");
-            processDeletion(build);
+            processDeletion(workspace);
 
         }
 
-        return true;
+        
     }
 
-    private void processDeletion(AbstractBuild<?, ?> build) {
+    private void processDeletion(FilePath workspace) {
         try {
-            getWorkspace(build).child("questaVrm-temporary").deleteRecursive();
-            getWorkspace(build).child("json.js").delete();
+            workspace.child("questaVrm-temporary").deleteRecursive();
+            workspace.child("json.js").delete();
         } catch (IOException e) {
 
         } catch (InterruptedException e) {
@@ -395,7 +395,7 @@ public class QuestaVrmPublisher extends Recorder {
     /**
      * {@inheritDoc}
      */
-    @Extension
+    @Extension @Symbol("questavrm")
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         private String vrunExec;

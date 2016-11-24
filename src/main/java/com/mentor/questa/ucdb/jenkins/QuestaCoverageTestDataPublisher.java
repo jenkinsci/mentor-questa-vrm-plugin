@@ -23,10 +23,13 @@
  */
 package com.mentor.questa.ucdb.jenkins;
 
+import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.AbstractBuild;
+import hudson.model.Run;
 import hudson.model.BuildListener;
 import hudson.model.Descriptor;
+import hudson.model.TaskListener;
 import hudson.tasks.junit.TestAction;
 import hudson.tasks.junit.TestDataPublisher;
 import hudson.tasks.junit.TestObject;
@@ -113,14 +116,14 @@ public class QuestaCoverageTestDataPublisher extends TestDataPublisher {
 
     }
 
-    public static TestResultAction.Data getTestData(List<String> mergefiles, String vrunExec, AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener, TestResult testResult) throws IOException, InterruptedException {
+    public static TestResultAction.Data getTestData(List<String> mergefiles, String vrunExec, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, TestResult testResult) throws IOException, InterruptedException {
         HashMap<String, QuestaUCDBResult> coverageResult = new HashMap<String, QuestaUCDBResult>();
         String vcoverExec = convertVruntoVcover(vrunExec);
 
         if (mergefiles != null) {
 
             for (String mergefile : mergefiles) {
-                 new QuestaCoverageTCLParser().parseResult(coverageResult, mergefile, vcoverExec, build, build.getProject().getWorkspace(), launcher, listener);
+                 new QuestaCoverageTCLParser().parseResult(coverageResult, mergefile, vcoverExec, build, workspace, launcher, listener);
             }
 
         }
@@ -128,6 +131,8 @@ public class QuestaCoverageTestDataPublisher extends TestDataPublisher {
         captureHistory(coverageResult, testResult);
         return new Data(coverageResult);
     }
+
+
 
     @Override
     public TestResultAction.Data getTestData(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener, TestResult testResult) throws IOException, InterruptedException {
