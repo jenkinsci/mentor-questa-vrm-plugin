@@ -34,9 +34,6 @@ import hudson.Launcher.ProcStarter;
 import hudson.Proc;
 import hudson.Util;
 import hudson.model.Run;
-import hudson.model.Build;
-import hudson.model.BuildListener;
-import hudson.model.AbstractBuild;
 import hudson.model.AbstractProject;
 import hudson.model.Result;
 import hudson.model.Saveable;
@@ -80,10 +77,11 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
 
     private final String vrmdata;
 
-    private boolean htmlReport = false;
-    private boolean collectCoverage = false;
+    private boolean htmlReport = true;
+    private boolean collectCoverage = true;
 
     private String vrunExec;
+    
 
     private String vrmhtmldir;
 
@@ -126,13 +124,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         return testDataPublishers == null ? Collections.<TestDataPublisher>emptyList() : testDataPublishers;
     }
 
-    private FilePath getWorkspace(AbstractBuild build) {
-        FilePath workspace = build.getWorkspace();
-        if (workspace == null) {
-            workspace = build.getProject().getSomeWorkspace();
-        }
-        return workspace;
-    }
+
 
     private void processTestDataPublishers(Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, QuestaVrmRegressionResult regressionResult) throws IOException, InterruptedException {
         TestResultAction action = build.getAction(TestResultAction.class);
@@ -230,14 +222,16 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
 
             } catch (IOException e) {
                 listener.getLogger().println("[ERROR]: Vrun executable \'" + getVrunExec() + "\' not found. Aborting storing VRM results. ");
-                return ;
+
+				throw new AbortException("[ERROR]: Vrun executable \'" + getVrunExec() + "\' not found. Aborting storing VRM results. ");
             }
             QuestaVrmRegressionResult regressionResult;
             try {
                 regressionResult = (QuestaVrmRegressionResult) new QuestaVrmResultsParser().parseResult(getVrmdata(), build, workspace,  launcher, listener);
             } catch (AbortException a) {
                 listener.getLogger().println("[ERROR]: No report found from command \'" + cmd + "\', please recheck your configuration. Aborting storing VRM results.");
-                return ;
+
+                throw new AbortException("[ERROR]: No report found from command \'" + cmd + "\', please recheck your configuration. Aborting storing VRM results.");
             }
 
             QuestaVrmJunitProcessor vrmProcessor = new QuestaVrmJunitProcessor();

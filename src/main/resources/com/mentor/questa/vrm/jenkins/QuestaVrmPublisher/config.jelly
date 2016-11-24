@@ -30,10 +30,10 @@ THE SOFTWARE.
         <f:textbox  />    
     </f:entry> 
     <f:entry  field="htmlReport" description="Publish the vrm html report to the project page." >
-        <f:checkbox title="Publish VRM HTML Results to Project Page" />
+        <f:checkbox title="Publish VRM HTML Results to Project Page" default="true" />
     </f:entry>     
     <f:entry field="collectCoverage" description="Publish the coverage results of the  mergefile(s) to jenkins." >
-        <f:checkbox  title="Publish Coverage Results"/>
+        <f:checkbox  title="Publish Coverage Results" default="true"/>
     </f:entry>
     <j:invokeStatic var="testDataPublisherDescriptors"
                         className="hudson.tasks.junit.TestDataPublisher" method="all" />
