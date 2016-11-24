@@ -44,7 +44,10 @@ public class QuestaUCDBResult extends QuestaCoverageResult {
     private transient double cputime = 0;
 
     public QuestaUCDBResult(String coverageId) {
-        super();
+        this(coverageId, false);
+    }
+    public QuestaUCDBResult(String coverageId, boolean shadow) {
+        super(shadow);
         this.addAttributes("Filename", coverageId);
         this.testsMap = new HashMap<String, QuestaCoverageResult>();
         trendableAttributes = new HashMap<String, Double>();
@@ -184,8 +187,8 @@ public class QuestaUCDBResult extends QuestaCoverageResult {
 
     @Override
     public QuestaUCDBResult createEmptyCopy() {
-        QuestaUCDBResult copy = new QuestaUCDBResult(this.getCoverageId());
-
+        QuestaUCDBResult copy = new QuestaUCDBResult(this.getCoverageId(),true);
+		
         for (QuestaCoverageResult covRes : testsMap.values()) {
             copy.addTest(covRes.createEmptyCopy());
         }

@@ -123,7 +123,7 @@ public class CoverageUtil {
             if (ta instanceof QuestaCoverageAction) {
                 QuestaCoverageResult coverageResult = ((QuestaCoverageAction) ta).getCoverageResult();
                 // Filter out dummy tests inserted for having a history link...
-                if(coverageResult.containsCoverage()){
+                if(!coverageResult.isShadow()){
                     coverageResult.tally(testResult);
                     coverageResults.add(coverageResult);
                     defaultFailed +=  coverageResult.getFailCount();
@@ -145,7 +145,7 @@ public class CoverageUtil {
         if (coverageResults.isEmpty()) {
             insertCell(row, emptyCell);
         } else if (coverageResults.size() == 1) {
-            if (coverageResults.get(0).containsCoverage()) {
+            if (!coverageResults.get(0).isShadow()) {
                 row.add(new CoverageUtil.RowItem(Util.getTimeSpanString((long) coverageResults.get(0).getCpuTime() * 1000)));
                 row.add(new RowItem(coverageResults.get(0).getTotalCoverage(),covFormatter));
                 row.add(new RowItem(coverageResults.get(0).getTestplanCov(), covFormatter));
@@ -176,7 +176,7 @@ public class CoverageUtil {
 
             }
             for (QuestaCoverageResult coverageResult : coverageResults) {
-                if (coverageResult.getTotalCount() == 0 || !coverageResult.containsCoverage()) {
+                if (coverageResult.getTotalCount() == 0 || coverageResult.isShadow()) {
                     continue;
                 }
                 row.add(new RowItem(coverageResult.getCoverageId()));

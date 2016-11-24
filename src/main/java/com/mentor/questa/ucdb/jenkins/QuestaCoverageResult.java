@@ -49,14 +49,23 @@ public class QuestaCoverageResult implements Serializable {
     private double totalCoverage;
     private double testplanCov;
     private String fileName;
+	private boolean shadow;
+
     private transient TestResult testResult;
     private transient QuestaCoverageAction coverageAction;
     private transient QuestaUCDBResult ucdbResult;
 
 
     public QuestaCoverageResult() {
-        coverageValues = new HashMap<String, Double>();
-        attributesValues = new HashMap<String, String>();
+        this(false);
+    }
+
+    public QuestaCoverageResult(boolean shadow) {
+                
+        this.shadow= shadow;
+        this.coverageValues = new HashMap<String, Double>();
+        this.attributesValues = new HashMap<String, String>();
+		
     }
 
     public void add(String coverageType, String value) {
@@ -338,7 +347,7 @@ public class QuestaCoverageResult implements Serializable {
     }
 
     public QuestaCoverageResult createEmptyCopy() {
-        QuestaCoverageResult copy = new QuestaCoverageResult();
+        QuestaCoverageResult copy = new QuestaCoverageResult(true);
         copy.addAttributes("Filename", fileName);
         copy.addAttributes("TESTNAME", getTestName());
         return copy;
@@ -348,6 +357,10 @@ public class QuestaCoverageResult implements Serializable {
     @Exported
     public boolean containsCoverage() {
         return !coverageValues.isEmpty();
+    }
+
+    public boolean isShadow() {
+        return shadow;
     }
 
     public synchronized void tally(TestResult testResult) {

@@ -27,57 +27,85 @@ THE SOFTWARE.
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:i="jelly:fmt" xmlns:l="/lib/layout" xmlns:t="/lib/hudson">
     <j:set var="cov" value="${it.coverageResult}"/>
     <j:set var="history" value="${it.history}"/>
-    <j:if test="${cov.containsCoverage()}">
-       <!-- Causing to mess page layout -->
-       <!-- <div align="center"> -->
-            <table align="center">
-                <tr>
-                    <td>
-                        <img src="${it.urlName}/bar"  alt="[Coverage Results Chart]"/>
-                    </td>
-                    <j:if test="${!history.getTrendableAttributes().isEmpty()}">
-                        <td style="width:5em;"/>
+    <table align="center">
+        <tr>
+            <j:if test="${cov.containsCoverage()}">
+                <td>
+                    <img src="${it.urlName}/bar"  alt="[Coverage Results Chart]"/>
+                </td>
+            </j:if>
+            <j:if test="${!history.getTrendableAttributes().isEmpty()}">
+                <td style="width:5em;"/>
 
-                        <td>
-                            <div class="test-trend-caption">
-                                Test Statistics
-                            </div>
-                            <div  style=" height:200px;width:auto;overflow-y:auto; overflow-x:hidden" >
-                                <table class="pane" id="ucdbstats1">
-                                    <tr >
-                                        <td class="pane-header" >Metric</td>
-                                        <td class="pane-header" style="width:5em;">Value</td>
-                                        <td class="pane-header" style="width:1em; font-size:smaller; white-space:nowrap;">
-                                            <a href="${it.urlName}">
-                                                (diff)
-                                            </a>
-                                        </td>
-                                    </tr> 
-                                    <j:set var="prevcov" value="${it.previousResult}"/>
-                                    <j:forEach var="attributeKey" items="${history.getTrendableAttributes()}">
-                                        <j:set var="diff" value="${it.getDoubleDiffString(cov.getAttributeDoubleValue(attributeKey) - prevcov.getAttributeDoubleValue(attributeKey))}"/>
+                <td>
+                    <div class="test-trend-caption">
+                        Test Statistics
+                    </div>
+                    <div  style=" height:200px;width:auto;overflow-y:auto; overflow-x:hidden" >
+                        <table class="pane" id="ucdbstats1">
+                            <tr >
+                                <td class="pane-header" >Metric</td>
+                                <td class="pane-header" style="width:5em;">Value</td>
+                                <td class="pane-header" style="width:1em; font-size:smaller; white-space:nowrap;">
+                                    <a href="${it.urlName}">
+                                        (diff)
+                                    </a>
+                                </td>
+                            </tr> 
+                            <j:set var="prevcov" value="${it.previousResult}"/>
+                            <j:forEach var="attributeKey" items="${history.getTrendableAttributes()}">
+                                <j:set var="diff" value="${it.getDoubleDiffString(cov.getAttributeDoubleValue(attributeKey) - prevcov.getAttributeDoubleValue(attributeKey))}"/>
                 
-                                        <tr> 
-                                            <td class="pane" style="text-align:left" >${attributeKey}</td>
-                                            <td class="pane" style="text-align:right; width:5em;">${cov.getAttributeValue(attributeKey)}</td>
-                                            <td class="pane" style="text-align:right" data="${cov.getAttributeDoubleValue(attributeKey) - prevcov.getAttributeDoubleValue(attributeKey)}">
-                                                ${diff}
-                                            </td>
-                                        </tr>
+                                <tr> 
+                                    <td class="pane" style="text-align:left" >${attributeKey}</td>
+                                    <td class="pane" style="text-align:right; width:5em;">${cov.getAttributeValue(attributeKey)}</td>
+                                    <td class="pane" style="text-align:right" data="${cov.getAttributeDoubleValue(attributeKey) - prevcov.getAttributeDoubleValue(attributeKey)}">
+                                        ${diff}
+                                    </td>
+                                </tr>
                   
-                                    </j:forEach>
-                                </table>
-                            </div>
-                        </td>
-                    </j:if>
-                </tr>
+                            </j:forEach>
+                        </table>
+                    </div>
+                </td>
+            </j:if>
+        </tr>
 
-            </table>
+    </table>
      
-       <!-- </div> -->
-        <j:if test="${it.isLeafLevel()}">
+    <!-- </div> -->
+    <j:if test="${it.isLeafLevel()}">
 
-            <j:set var="id" value="simulation"/>
+        <j:set var="id" value="simulation"/>
+        <j:set var="open" value="javascript:showDetails('${id}')"/>  
+        <j:set var="close" value="javascript:hideDetails('${id}')"/>  
+
+        <h3>
+            <a id="${id}-showlink" href="${open}" title="Show Details" >
+                <l:icon class="icon-document-add icon-sm"/>
+            </a>
+            <a id="${id}-hidelink" href="${close}" title="Hide Details" style="display: none">
+                <l:icon class="icon-document-delete icon-sm"/>
+            </a>  
+            Test Record Attributes</h3>
+        <!--div style="margin-left: 50px"-->
+        <dl id="${id}" style="display: none;margin-left: 20px">
+            <j:set var="attributes" items="${cov.attributesValues}"/>
+          
+            <j:forEach var="attributeKey" items="${cov.getSimulationKeys()}">
+                <j:if test="${!empty(cov.getAttributeValue(attributeKey))}">
+                    <dt>${attributeKey}:</dt>
+                    <dd>
+                        <pre>
+                            <j:out value="${cov.getAttributeValue(attributeKey)}"/>
+                        </pre>
+                    </dd>
+                </j:if>
+            </j:forEach>
+        </dl>
+
+        <j:if test="${!cov.getOtherAttributes().isEmpty()}">
+            <j:set var="id" value="otherAttributes"/>
             <j:set var="open" value="javascript:showDetails('${id}')"/>  
             <j:set var="close" value="javascript:hideDetails('${id}')"/>  
 
@@ -88,12 +116,11 @@ THE SOFTWARE.
                 <a id="${id}-hidelink" href="${close}" title="Hide Details" style="display: none">
                     <l:icon class="icon-document-delete icon-sm"/>
                 </a>  
-                Simulation Settings</h3>
-            <!--div style="margin-left: 50px"-->
+                Additional Attributes</h3>
+        
             <dl id="${id}" style="display: none;margin-left: 20px">
-                <j:set var="attributes" items="${cov.attributesValues}"/>
           
-                <j:forEach var="attributeKey" items="${cov.getSimulationKeys()}">
+                <j:forEach var="attributeKey" items="${cov.getOtherAttributes()}">
                     <j:if test="${!empty(cov.getAttributeValue(attributeKey))}">
                         <dt>${attributeKey}:</dt>
                         <dd>
@@ -104,36 +131,7 @@ THE SOFTWARE.
                     </j:if>
                 </j:forEach>
             </dl>
-
-            <j:if test="${!cov.getOtherAttributes().isEmpty()}">
-                <j:set var="id" value="otherAttributes"/>
-                <j:set var="open" value="javascript:showDetails('${id}')"/>  
-                <j:set var="close" value="javascript:hideDetails('${id}')"/>  
-
-                <h3>
-                    <a id="${id}-showlink" href="${open}" title="Show Details" >
-                        <l:icon class="icon-document-add icon-sm"/>
-                    </a>
-                    <a id="${id}-hidelink" href="${close}" title="Hide Details" style="display: none">
-                        <l:icon class="icon-document-delete icon-sm"/>
-                    </a>  
-                    Additional Attributes</h3>
-        
-                <dl id="${id}" style="display: none;margin-left: 20px">
-          
-                    <j:forEach var="attributeKey" items="${cov.getOtherAttributes()}">
-                        <j:if test="${!empty(cov.getAttributeValue(attributeKey))}">
-                            <dt>${attributeKey}:</dt>
-                            <dd>
-                                <pre>
-                                    <j:out value="${cov.getAttributeValue(attributeKey)}"/>
-                                </pre>
-                            </dd>
-                        </j:if>
-                    </j:forEach>
-                </dl>
     
-            </j:if>
         </j:if>
 
     

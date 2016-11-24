@@ -51,7 +51,7 @@ public class QuestaVrmRegressionBuildAction implements RunAction2, StaplerProxy,
 
     private transient WeakReference<QuestaVrmRegressionResult> questaVrmResultRef;
 
-    public QuestaVrmRegressionBuildAction(AbstractBuild owner, boolean htmlReport) {
+    public QuestaVrmRegressionBuildAction(Run owner, boolean htmlReport) {
         this.run = owner;
         this.htmlReport = htmlReport;
     }

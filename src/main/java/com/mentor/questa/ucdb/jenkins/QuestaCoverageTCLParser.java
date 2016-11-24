@@ -206,6 +206,7 @@ public class QuestaCoverageTCLParser implements Serializable {
     }
 
     private ArrayList<FilePath> mostRecent(final long buildTime, FilePath workspace, final FilePath[] reports) throws IOException, InterruptedException {
+        //TODO: Check whether we can pass the regression time to take into consideration as well or is it too risky? 
         final long nowMaster = System.currentTimeMillis();
         return workspace.act(new jenkins.SlaveToMasterFileCallable<ArrayList<FilePath>>() {
 
@@ -323,7 +324,8 @@ public class QuestaCoverageTCLParser implements Serializable {
             }
 
             if (result.isTest()) {
-                if (result.coverageValues.size() > 0) {
+                // filter out history records
+                if (!result.getCoverageId().equals(mergeResult.getCoverageId())) {
                     mergeResult.addTest(result);
                 }
             } else {

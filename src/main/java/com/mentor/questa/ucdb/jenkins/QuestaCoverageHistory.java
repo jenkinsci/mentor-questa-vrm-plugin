@@ -243,7 +243,7 @@ public class QuestaCoverageHistory extends History {
 
             for (hudson.tasks.test.TestResult o : list) {
                 QuestaCoverageResult currentCov = CoverageUtil.getCoverageResult(o, coverageResult.getCoverageId());
-                if (currentCov == null || !currentCov.containsCoverage()) {
+                if (currentCov == null || currentCov.isShadow()) {
                     continue;
                 }
                 ChartLabel label = getLabel(o, metrics);
