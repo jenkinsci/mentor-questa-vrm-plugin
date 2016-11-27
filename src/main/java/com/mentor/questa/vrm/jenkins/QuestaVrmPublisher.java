@@ -134,7 +134,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         List<TestResultAction.Data> testData = new ArrayList<TestResultAction.Data>();
 
         if (isCollectCoverage()) {
-            QuestaCoverageTestDataPublisher.Data d = (QuestaCoverageTestDataPublisher.Data) QuestaCoverageTestDataPublisher.getTestData(regressionResult.getMergeFiles(), resolveParametersInString(build, listener, getVrunExec()), build, workspace, launcher, listener, action.getResult());
+            QuestaCoverageTestDataPublisher.Data d = (QuestaCoverageTestDataPublisher.Data) QuestaCoverageTestDataPublisher.getRegressionTestData(regressionResult.getMergeFiles(), resolveParametersInString(build, listener, getVrunExec()), regressionResult.getRegressionBegin(), build, workspace, launcher, listener, action.getResult());
             if (d != null) {
                 testData.add(d);
             }

@@ -39,6 +39,7 @@ import hudson.util.FormValidation;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import javax.servlet.ServletException;
@@ -116,14 +117,14 @@ public class QuestaCoverageTestDataPublisher extends TestDataPublisher {
 
     }
 
-    public static TestResultAction.Data getTestData(List<String> mergefiles, String vrunExec, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, TestResult testResult) throws IOException, InterruptedException {
+    public static TestResultAction.Data getRegressionTestData(List<String> mergefiles, String vrunExec, Date regressionBegin, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, TestResult testResult) throws IOException, InterruptedException {
         HashMap<String, QuestaUCDBResult> coverageResult = new HashMap<String, QuestaUCDBResult>();
         String vcoverExec = convertVruntoVcover(vrunExec);
 
         if (mergefiles != null) {
 
             for (String mergefile : mergefiles) {
-                 new QuestaCoverageTCLParser().parseResult(coverageResult, mergefile, vcoverExec, build, workspace, launcher, listener);
+                 new QuestaCoverageTCLParser().parseResult(coverageResult, mergefile, vcoverExec, build, workspace, launcher, listener, regressionBegin);
             }
 
         }

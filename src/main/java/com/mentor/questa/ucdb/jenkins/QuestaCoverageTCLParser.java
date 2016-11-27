@@ -42,6 +42,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Date;
 
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -69,11 +70,14 @@ public class QuestaCoverageTCLParser implements Serializable {
     }
 
     public HashMap<String, QuestaUCDBResult> parseResult(String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
-        return parseResult(new HashMap<String, QuestaUCDBResult>(), coverageResults, vcoverExec, run, workspace, launcher, listener);
+        return parseResult(new HashMap<String, QuestaUCDBResult>(), coverageResults, vcoverExec, run, workspace, launcher, listener, null);
     }
 
     public HashMap<String, QuestaUCDBResult> parseResult(HashMap<String, QuestaUCDBResult> results, String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
-        final long buildTime = run.getTimestamp().getTimeInMillis();
+	return parseResult(results, coverageResults,  vcoverExec, run, workspace,launcher, listener, null); 
+    }
+    public HashMap<String, QuestaUCDBResult> parseResult(HashMap<String, QuestaUCDBResult> results, String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener, Date regressionBegin) throws InterruptedException, IOException {
+        final long buildTime = regressionBegin==null? run.getTimestamp().getTimeInMillis(): regressionBegin.getTime();
         PrintStream logger = listener.getLogger();
 
         //get the output of this build
@@ -206,7 +210,6 @@ public class QuestaCoverageTCLParser implements Serializable {
     }
 
     private ArrayList<FilePath> mostRecent(final long buildTime, FilePath workspace, final FilePath[] reports) throws IOException, InterruptedException {
-        //TODO: Check whether we can pass the regression time to take into consideration as well or is it too risky? 
         final long nowMaster = System.currentTimeMillis();
         return workspace.act(new jenkins.SlaveToMasterFileCallable<ArrayList<FilePath>>() {
 
