@@ -100,8 +100,7 @@ public class QuestaCoverageTCLParser implements Serializable {
         }
 
         for (FilePath report : recentReports) {
-            File file = new File(report.getRemote());
-            QuestaUCDBResult mergeResult = parseResultFromFile(file.getPath(), vcoverExec, workspace, launcher, run.getEnvironment(listener), logger);
+            QuestaUCDBResult mergeResult = parseResultFromFile(report.getRemote(), vcoverExec, workspace, launcher, run.getEnvironment(listener), logger);
             results.put(mergeResult.getCoverageId(), mergeResult);
         }
 
