@@ -58,7 +58,7 @@ public class QuestaVrmJunitProcessor  implements Serializable {
             existingTestResults = existingAction.getResult();
         }
 
-        TestResult result = getTestResult(workspace, "*.xml", existingTestResults, buildTime, nowMaster);
+        TestResult result = getTestResult(workspace, "vm-jUnit.xml", existingTestResults, buildTime, nowMaster);
         if (result != null) {
             TestResultAction action;
             if (existingAction == null) {
@@ -89,10 +89,7 @@ public class QuestaVrmJunitProcessor  implements Serializable {
             @Override
             public TestResult invoke(File ws, VirtualChannel channel) throws IOException {
                 final long nowSlave = System.currentTimeMillis();
-                File generatedJunitDir = new File(ws, QuestaVrmPublisher.TMP_DIRECTORY);
-                //Ignore return value
-                generatedJunitDir.mkdirs();
-                FileSet fs = Util.createFileSet(generatedJunitDir, junitFilePattern);
+                FileSet fs = Util.createFileSet(ws, junitFilePattern);
                 DirectoryScanner ds = fs.getDirectoryScanner();
                 String[] files = ds.getIncludedFiles();
 

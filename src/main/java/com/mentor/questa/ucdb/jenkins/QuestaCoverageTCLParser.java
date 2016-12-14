@@ -23,6 +23,7 @@
  */
 package com.mentor.questa.ucdb.jenkins;
 
+import com.mentor.questa.vrm.jenkins.QuestaVrmHTMLArchiver;
 import hudson.AbortException;
 import java.io.File;
 
@@ -118,10 +119,10 @@ public class QuestaCoverageTCLParser implements Serializable {
         String cmd = vcoverExec + " stats -stats=none -prec 4 -tcl " + inputfile;
         String vcoveroutput = "";
         try {
-        	Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
+            Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
             proc.join();
             vcoveroutput = outputstream.toString();
-            mergeResult = parseCoverage(mergeResult.getCoverageId(), parseTcl(vcoveroutput, "Filename"));
+            mergeResult = parseCoverage(mergeResult.getCoverageId(),vcoveroutput);
         } catch (AbortException e) {
             logger.println("[ERROR]: Error processing UCDB \'" + inputfile + "\', with command \'" + cmd + "\'.");
             logger.println("Command Output:" + vcoveroutput);
@@ -135,10 +136,10 @@ public class QuestaCoverageTCLParser implements Serializable {
         outputstream.reset();
 
         try {
-        	Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
+            Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
             proc.join();
             vcoveroutput = outputstream.toString();
-            parseTrendableAttributes(mergeResult.attributesValues, parseTcl(vcoveroutput, "ATTRIBUTE"));
+            parseTrendableAttributes(mergeResult.attributesValues, vcoveroutput);
         } catch (AbortException e) {
             logger.println("[ERROR]: During processing global attributes of UCDB \'" + inputfile + "\', with command \'" + cmd + "\'.  Ignoring attributes.");
             logger.println("Command Output:" + vcoveroutput);
@@ -151,11 +152,11 @@ public class QuestaCoverageTCLParser implements Serializable {
         cmd = vcoverExec + " attribute  -ucdb -tcl -trendable -stats=none " + inputfile;
         outputstream.reset();
         try {
-        	Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
+            Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
             proc.join();
             vcoveroutput = outputstream.toString();
             HashMap<String, String> attributes = new HashMap<String, String>();
-            parseTrendableAttributes(attributes, parseTcl(vcoveroutput, "ATTRIBUTE"));
+            parseTrendableAttributes(attributes, vcoveroutput);
             for (String attr : attributes.keySet()) {
                 // trendable attributes are stored as double
                 mergeResult.addTrendableAttribute(attr, attributes.get(attr));
@@ -248,8 +249,8 @@ public class QuestaCoverageTCLParser implements Serializable {
         return root;
     }
 
-    private static void parseTrendableAttributes(HashMap attributes, TclList root) throws AbortException {
-
+    static void parseTrendableAttributes(HashMap attributes, String vcoverOutput ) throws AbortException {
+        TclList root = parseTcl(vcoverOutput, "ATTRIBUTE");
         attributes.clear();
 
         LinkedList<TclToken> list = root.getChildren();
@@ -275,8 +276,8 @@ public class QuestaCoverageTCLParser implements Serializable {
         }
     }
 
-    private static QuestaUCDBResult parseCoverage(String coverageID, TclList root) throws AbortException {
-
+    static QuestaUCDBResult parseCoverage(String coverageID, String vcoveroutput) throws AbortException {
+        TclList root = parseTcl(vcoveroutput, "Filename");
         QuestaUCDBResult mergeResult = new QuestaUCDBResult(coverageID);
 
         // First-level elements should contribute to the mergefile itself 

@@ -51,6 +51,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.annotation.Nonnull;
 import jenkins.model.Jenkins;
 import jenkins.tasks.SimpleBuildStep;
@@ -71,10 +73,6 @@ import org.kohsuke.stapler.StaplerRequest;
  */
 public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
 
-    static final String TMP_DIRECTORY = "questaVrm-temporary",
-            HTML_ARCHIVE_DIR = "questavrmhtmlreport",
-            COV_ARCHIVE_DIR = "covhtmlreport";
-
     private final String vrmdata;
 
     private boolean htmlReport = true;
@@ -90,7 +88,9 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
     private DescribableList<TestDataPublisher, Descriptor<TestDataPublisher>> testDataPublishers;
 
     private Double healthScaleFactor = 1.0;
-
+    
+    private static final Logger logger = Logger.getLogger(QuestaVrmPublisher.class.getName());
+    
     @DataBoundConstructor
     public QuestaVrmPublisher(String vrmdata) {
         this.vrmdata = vrmdata;
@@ -157,10 +157,10 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         String expandedVrmData = resolveParametersInString(build, listener, vrmdata);
 
         // Workaround for vrm windows path bug
-        if (System.getProperty("file.separator").equals("\\")) {
+        if (File.separator.equals("\\")) {
             expandedVrmData = expandedVrmData.replace('\\', '/');
         }
-
+       
         String cmd = resolveParametersInString(build, listener, getVrunExec()) + " -vrmdata " + expandedVrmData + " -status " + resolveParametersInString(build, listener, getExtraArgs()) + " -json ";
 
         if (isHtmlReport()) {
@@ -179,31 +179,6 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         build.addAction(new QuestaVrmHostAction(build));
     }
 
-    private File getOrCreateDir(File dir, String directoryName) {
-        File targetDir = new File(dir, directoryName);
-        if (!targetDir.exists()) {
-            targetDir.mkdir();
-        }
-        return targetDir;
-    }
-   
-    private void archiveHTMLReport( Run<?, ?> build, TaskListener listener, FilePath fromDir, String src,  String target) throws IOException, InterruptedException {
-        listener.getLogger().println("Archiving  VRM HTML report...");
-
-        FilePath archiveDir = new FilePath(getOrCreateDir(build.getParent().getRootDir(), target));
-
-        // check whether the directory that contains the HTML report exists
-        if (!fromDir.exists()) {
-            listener.getLogger().println("[ERROR]: HTML report \'" + src + "\' not found. Skipping archiving HTML Report for build #" + build.getNumber() + ".");
-            return;
-        } else {
-            archiveDir.deleteContents();
-        }
-
-        fromDir.copyRecursiveTo("**/*", archiveDir);
-
-    }
-
     @Override
     public void perform(Run<?,?> build, FilePath workspace ,Launcher launcher, TaskListener listener) throws IOException, InterruptedException {
 
@@ -213,24 +188,30 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         synchronized (build) {
 
             String cmd = constructCmdString(build, listener);
+            ByteArrayOutputStream vrunOutput = new ByteArrayOutputStream();
             try {
                 ProcStarter ps = launcher.launch();
-                ps.cmds(Util.tokenize(cmd)).envs(build.getEnvironment(listener)).stdin(null).stdout(new ByteArrayOutputStream()).pwd(workspace);
+                ps.cmds(Util.tokenize(cmd)).envs(build.getEnvironment(listener)).stdin(null).stdout(vrunOutput).pwd(workspace);
                 ps.quiet(true);
                 Proc proc = launcher.launch(ps);
                 proc.join();
+                logger.log(Level.WARNING, "Output of vrun command '"+cmd+"':"+vrunOutput.toString());
 
             } catch (IOException e) {
                 listener.getLogger().println("[ERROR]: Vrun executable \'" + getVrunExec() + "\' not found. Aborting storing VRM results. ");
-
-				throw new AbortException("[ERROR]: Vrun executable \'" + getVrunExec() + "\' not found. Aborting storing VRM results. ");
+                logger.log(Level.WARNING, "Output of vrun command '"+cmd+"':"+vrunOutput.toString());
+                logger.log(Level.SEVERE, "Exception when running vrun command:"+e.toString());
+		throw new AbortException("[ERROR]: Vrun executable \'" + getVrunExec() + "\' not found. Aborting storing VRM results. ");
             }
+            
             QuestaVrmRegressionResult regressionResult;
+            
             try {
                 regressionResult = (QuestaVrmRegressionResult) new QuestaVrmResultsParser().parseResult(getVrmdata(), build, workspace,  launcher, listener);
             } catch (AbortException a) {
                 listener.getLogger().println("[ERROR]: No report found from command \'" + cmd + "\', please recheck your configuration. Aborting storing VRM results.");
-
+                listener.getLogger().println("Output of vrun command:\n"+vrunOutput.toString());
+                logger.log(Level.SEVERE, "Exception when parsing JSONfile:"+a.toString());
                 throw new AbortException("[ERROR]: No report found from command \'" + cmd + "\', please recheck your configuration. Aborting storing VRM results.");
             }
 
@@ -240,25 +221,13 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
 
             // Add VRM build action(s)
             addVrmBuildActions(build, listener, regressionResult);
-
-            if (isHtmlReport()) {
-                FilePath vrmHtmlDir = workspace.child(getVrmhtmldir());
-                archiveHTMLReport(build,listener, vrmHtmlDir, getVrmhtmldir(), HTML_ARCHIVE_DIR);
-                
-                // Process Coverage HTML reports if necessary 
-                // if a single mergefile exists then the user might have changed the htmldir 
-                if (regressionResult.getCovHTMLReports().size() == 1){
-                   String covHtmlDir = regressionResult.getCovHTMLReports().get(0);
-                   
-                   FilePath covHtmlDirPath = vrmHtmlDir.child(covHtmlDir);
-                    if (!covHtmlDirPath.exists()) {
-                         archiveHTMLReport(build,listener, workspace.child(covHtmlDir), covHtmlDir, COV_ARCHIVE_DIR);
-                    }
-                }
-            }
             
             // process data publishers
             processTestDataPublishers(build, workspace, launcher, listener, regressionResult);
+            
+            if (isHtmlReport()) {
+                new QuestaVrmHTMLArchiver(getVrmhtmldir(), regressionResult.getCovHTMLReports()).perform(build, workspace, listener, listener.getLogger());
+            }
 
             // Adjust build result if any of the regression actions failed
             if (build.getResult() == null || (build.getResult().isBetterThan(Result.UNSTABLE)
@@ -276,7 +245,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
 
     private void processDeletion(FilePath workspace) {
         try {
-            workspace.child("questaVrm-temporary").deleteRecursive();
+            workspace.child("vm-jUnit.xml").delete();
             workspace.child("json.js").delete();
         } catch (IOException e) {
 

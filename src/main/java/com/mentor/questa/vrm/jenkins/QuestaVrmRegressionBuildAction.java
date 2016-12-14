@@ -89,7 +89,7 @@ public class QuestaVrmRegressionBuildAction implements RunAction2, StaplerProxy,
         File archiveDir = new File(dir,path);
 
         if (archiveDir.exists()) {
-            actions.add(new QuestaVrmHTMLAction(archiveDir, QuestaVrmPublisher.COV_ARCHIVE_DIR+(index==0?"":index), "index.html", "/plugin/mentor-questa-vrm/icons/coverage-report.png",  "Latest Questa Coverage Report"+(index==0?"":" "+index)));
+            actions.add(new QuestaVrmHTMLAction(archiveDir, QuestaVrmHTMLArchiver.COV_ARCHIVE_DIR+(index==0?"":index), "index.html", "/plugin/mentor-questa-vrm/icons/coverage-report.png",  "Latest Questa Coverage Report"+(index==0?"":" "+index)));
             return true;
         } 
         return false;
@@ -98,19 +98,18 @@ public class QuestaVrmRegressionBuildAction implements RunAction2, StaplerProxy,
     @Override
     public Collection<? extends Action> getProjectActions() {
         Collection<Action> actions = new ArrayList<Action>();
-        File vrmHtmlDir = new File(run.getParent().getRootDir(), QuestaVrmPublisher.HTML_ARCHIVE_DIR);
+        File vrmHtmlDir = new File(run.getParent().getRootDir(), QuestaVrmHTMLArchiver.HTML_ARCHIVE_DIR);
 
         if (htmlReport && vrmHtmlDir.exists()) {
-            actions.add(new QuestaVrmHTMLAction(vrmHtmlDir, QuestaVrmPublisher.HTML_ARCHIVE_DIR, "index.html", "/plugin/mentor-questa-vrm/icons/HTML.png", "Latest Questa VRM Report"));
+            actions.add(new QuestaVrmHTMLAction(vrmHtmlDir, QuestaVrmHTMLArchiver.HTML_ARCHIVE_DIR, "index.html", "/plugin/mentor-questa-vrm/icons/HTML.png", "Latest Questa VRM Report"));
             QuestaVrmRegressionResult regressionResult = getResult();
             
             if (regressionResult.getCovHTMLReports().size() == 1) {
                     if (!addCovHTMLAction(actions, vrmHtmlDir, regressionResult.getCovHTMLReports().get(0) , 0)) {
                         // The coverage report is not nested within the VRM HTML directory.
-                         addCovHTMLAction(actions,  run.getParent().getRootDir(), QuestaVrmPublisher.COV_ARCHIVE_DIR, 0);
+                         addCovHTMLAction(actions,  run.getParent().getRootDir(), QuestaVrmHTMLArchiver.COV_ARCHIVE_DIR, 0);
                     }
             } else {
-                
                 int index = 1;
                 for (String covHtmlReport : regressionResult.getCovHTMLReports()) {
                     addCovHTMLAction(actions, vrmHtmlDir, covHtmlReport, index++);

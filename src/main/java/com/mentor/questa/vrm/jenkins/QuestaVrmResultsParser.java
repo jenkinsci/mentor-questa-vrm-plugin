@@ -48,6 +48,8 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import jenkins.MasterToSlaveFileCallable;
 import net.sf.json.JSONArray;
 
@@ -62,7 +64,8 @@ import org.apache.tools.ant.types.FileSet;
  *
  */
 public class QuestaVrmResultsParser extends TestResultParser implements Serializable {
-
+    private static final Logger logger = Logger.getLogger(QuestaVrmResultsParser.class.getName());
+    
     private static final String REGR_MERGEFILES = "mergefiles",
             REGR_HTMLREPORTS = "covhtmlreports",
             REGR_OPTNS = "options",
@@ -74,11 +77,10 @@ public class QuestaVrmResultsParser extends TestResultParser implements Serializ
             REGR_SUMMARY = "json.js";
 
     @Override
-    public hudson.tasks.test.TestResult parseResult(String testResultLocations, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
-
+    public hudson.tasks.test.TestResult parseResult(String vrmdata, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
         final long buildTime = run.getTimestamp().getTimeInMillis();
         final long timeOnMaster = System.currentTimeMillis();
-        return workspace.act(new ParseResultCallable(testResultLocations, buildTime, timeOnMaster, false));
+        return workspace.act(new ParseResultCallable(vrmdata, buildTime, timeOnMaster, false));
     }
 
     private static final class ParseResultCallable extends MasterToSlaveFileCallable<TestResult> {
@@ -125,10 +127,10 @@ public class QuestaVrmResultsParser extends TestResultParser implements Serializ
         
         private String processFilePath(File ws, String relativePath, String filename) {
             // Workaround for vrm windows path bug
-            if (System.getProperty("file.separator").equals("\\")){
+            if (File.separator.equals("\\")){
                 filename=filename.replace('/', '\\');
             }
-           
+
             File file = new File(filename);
             if (file.isAbsolute()) {
                 return getRelativePath(ws, filename);
@@ -185,13 +187,15 @@ public class QuestaVrmResultsParser extends TestResultParser implements Serializ
 
                 ArrayList<String> mrgfiles = new ArrayList<String>();
                 if (jsonobject.containsKey(REGR_MERGEFILES)) {
+                    
                     for (Object mrgfile : jsonobject.getJSONArray(REGR_MERGEFILES)) {
                         String mrgfilename = mrgfile.toString();
                         mrgfiles.add(processFilePath(ws, mrgfilename));
-                        
+                        logger.log(Level.INFO, "Regression has mergefile: "+ mrgfiles.get(mrgfiles.size()-1));
                     }
 
                 }
+                
                 regressionResult.setMergeFiles(mrgfiles);
                 ArrayList<String> covhtmlreports = new ArrayList<String>();
                 if (jsonobject.containsKey(REGR_HTMLREPORTS)) {
@@ -219,7 +223,7 @@ public class QuestaVrmResultsParser extends TestResultParser implements Serializ
                 int actionIndex = colIndex[ColumnIndex.ACTION.getIndex()];
 
                 if (actionIndex == -1) {
-
+                    logger.log(Level.SEVERE, "No actions found in the JSON file");
                     throw new AbortException(ABORT_MSG);
 
                 }
@@ -227,11 +231,13 @@ public class QuestaVrmResultsParser extends TestResultParser implements Serializ
                 for (Object data : jsonobject.getJSONArray("results")) {
                     JSONArray dataarray = JSONArray.fromObject(data);
                     if (dataarray.getString(actionIndex).endsWith("execScript") && !dataarray.getString(colIndex[ColumnIndex.TESTNAME.getIndex()]).equals("--")) {
+                        // Process test actions
                         QuestaVrmTestResult testResult = new QuestaVrmTestResult(regressionResult);
                         initResult(testResult, dataarray, colIndex);
                         regressionResult.addAction(testResult);
 
                     } else {
+                        // Process non-test actions 
                         QuestaVrmActionResult actionResult = new QuestaVrmActionResult(regressionResult);
                         initResult(actionResult, dataarray, colIndex);
                         if (actionResult.isFailed()) {
@@ -243,16 +249,17 @@ public class QuestaVrmResultsParser extends TestResultParser implements Serializ
                     }
 
                 }
-                final String tmpDirectory = QuestaVrmPublisher.TMP_DIRECTORY;
-                File junitOutputPath = new File(ws, tmpDirectory);
-                junitOutputPath.mkdirs();
-
+                logger.log(Level.INFO, "Total actions "+ regressionResult.getTotalActionCount()+", failed actions "+ regressionResult.getFailedActionCount());
+                logger.log(Level.INFO, "Total tests "+ regressionResult.getTotalCount()+", failed tests "+ regressionResult.getFailCount());
+                
                 OutputStreamWriter out = null;
                 try {
-                    File outFile = new File(junitOutputPath, "vm-jUnit.xml");
+                    File outFile = new File(ws, "vm-jUnit.xml");
                     out = new OutputStreamWriter(new FileOutputStream(outFile), "UTF-8");
                     out.write(regressionResult.getXmlSnippet(ws));
-                } finally {
+                } catch(IOException e){
+                     logger.log(Level.SEVERE, "Exception while writing junit temp file "+ e.toString());
+                }finally {
                     IOUtils.closeQuietly(out);
                 }
                 return regressionResult;
