@@ -13,7 +13,7 @@
 
   <groupId>com.mentor.questa.vrm.jenkins</groupId>
   <artifactId>mentor-questa-vrm</artifactId>
-  <version>1.3-SNAPSHOT</version>
+  <version>1.3</version>
   <packaging>hpi</packaging>
 
   <name>Questa VRM</name>
