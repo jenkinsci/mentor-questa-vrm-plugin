@@ -34,7 +34,7 @@ public class QuestaAttributesSettingsMap {
     Map<String, QuestaAttributesGraphSetting> graphMap; 
 
     public QuestaAttributesSettingsMap() {
-        graphMap = new HashMap<String, QuestaAttributesGraphSetting>();
+        graphMap = new HashMap<>();
     }
 
     public QuestaAttributesSettingsMap(QuestaUCDBResult ucdbResult) {

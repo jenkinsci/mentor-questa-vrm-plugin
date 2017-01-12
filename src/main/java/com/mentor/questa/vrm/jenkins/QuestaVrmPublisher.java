@@ -105,10 +105,6 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         this.healthScaleFactor = healthScaleFactor;
     }
 
-    /**
-     *
-     * @return
-     */
     public String getVrmdata() {
         return vrmdata;
     }
@@ -161,7 +157,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
             expandedVrmData = expandedVrmData.replace('\\', '/');
         }
        
-        String cmd = resolveParametersInString(build, listener, getVrunExec()) + " -vrmdata " + expandedVrmData + " -status " + resolveParametersInString(build, listener, getExtraArgs()) + " -json ";
+        String cmd = resolveParametersInString(build, listener, getVrunExec()) + " -vrmdata " + expandedVrmData + " -status  -json -notestname ";
 
         if (isHtmlReport()) {
             cmd += " -html -htmldir " + resolveParametersInString(build, listener, getVrmhtmldir());
@@ -169,6 +165,8 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
                 cmd += " -covreport";
             }
         }
+        //append extra args
+        cmd+=" "+ resolveParametersInString(build, listener, getExtraArgs()); 
         return cmd;
     }
 
@@ -209,10 +207,10 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
             try {
                 regressionResult = (QuestaVrmRegressionResult) new QuestaVrmResultsParser().parseResult(getVrmdata(), build, workspace,  launcher, listener);
             } catch (AbortException a) {
-                listener.getLogger().println("[ERROR]: No report found from command \'" + cmd + "\', please recheck your configuration. Aborting storing VRM results.");
-                listener.getLogger().println("Output of vrun command:\n"+vrunOutput.toString());
+                listener.getLogger().println("[ERROR]:"+a.getMessage() +" Please recheck your configuration. Aborting storing VRM results.");
+                listener.getLogger().println("Output of vrun command \'" + cmd + "\':\n"+vrunOutput.toString());
                 logger.log(Level.SEVERE, "Exception when parsing JSONfile:"+a.toString());
-                throw new AbortException("[ERROR]: No report found from command \'" + cmd + "\', please recheck your configuration. Aborting storing VRM results.");
+                throw new AbortException("[ERROR]:"+a.getMessage() +" please recheck your configuration. Aborting storing VRM results.");
             }
 
             QuestaVrmJunitProcessor vrmProcessor = new QuestaVrmJunitProcessor();
@@ -230,8 +228,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
             }
 
             // Adjust build result if any of the regression actions failed
-            if (build.getResult() == null || (build.getResult().isBetterThan(Result.UNSTABLE)
-                    && regressionResult.getFailedActionCount() > 0)) {
+            if (regressionResult.getFailedActionCount() > 0) {
                 build.setResult(Result.UNSTABLE);
             }
 

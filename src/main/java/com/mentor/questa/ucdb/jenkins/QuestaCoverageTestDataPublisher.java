@@ -42,6 +42,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.servlet.ServletException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.DataBoundSetter;
@@ -102,10 +103,10 @@ public class QuestaCoverageTestDataPublisher extends TestDataPublisher {
         for (QuestaCoverageResult prevcov : CoverageUtil.getCoverageResult(testResult.getPreviousResult())) {
             boolean found = false;
             
-            for (String currentcovid : coverageResult.keySet()) {
+            for (Map.Entry<String, QuestaUCDBResult> coverageEntry : coverageResult.entrySet()) {
 
-                if (prevcov.getCoverageId().equals(currentcovid)) {
-                    ((QuestaUCDBResult)coverageResult.get(currentcovid)).copyEmptyTests(prevcov);
+                if (prevcov.getCoverageId().equals(coverageEntry.getKey())) {
+                    coverageEntry.getValue().copyEmptyTests(prevcov);
                     found = true;
 
                 }
@@ -118,7 +119,7 @@ public class QuestaCoverageTestDataPublisher extends TestDataPublisher {
     }
 
     public static TestResultAction.Data getRegressionTestData(List<String> mergefiles, String vrunExec, Date regressionBegin, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, TestResult testResult) throws IOException, InterruptedException {
-        HashMap<String, QuestaUCDBResult> coverageResult = new HashMap<String, QuestaUCDBResult>();
+        HashMap<String, QuestaUCDBResult> coverageResult = new HashMap<>();
         String vcoverExec = convertVruntoVcover(vrunExec);
 
         if (mergefiles != null) {
@@ -160,22 +161,20 @@ public class QuestaCoverageTestDataPublisher extends TestDataPublisher {
             hudson.tasks.test.TestResult testResult = (hudson.tasks.test.TestResult) testObject;
 
             if (testObject.getTotalCount() == 1) {
-                for (QuestaCoverageResult cov : coverageResults.values()) {
+                for (QuestaUCDBResult cov : coverageResults.values()) {
                     cov.tally(testResult);
                     if (cov.containsTest(testObject.getName())) {
                         return Collections.singletonList(new QuestaCoverageAction(testResult, cov.getTest(testObject.getName())));
                     }
-
                 }
                 return Collections.EMPTY_LIST;
             }
 
-            ArrayList<QuestaCoverageAction> coverageActions = new ArrayList<QuestaCoverageAction>();
+            ArrayList<QuestaCoverageAction> coverageActions = new ArrayList<>();
             int index = coverageResults.values().size() < 2 ? 0 : 1;
             for (QuestaCoverageResult cov : coverageResults.values()) {
                 cov.tally(testResult);
                 coverageActions.add(new QuestaCoverageAction(testResult, cov, index++));
-
             }
             return coverageActions;
 

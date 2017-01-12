@@ -25,7 +25,6 @@ package com.mentor.questa.vrm.jenkins;
 
 
 import com.thoughtworks.xstream.XStream;
-import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.XmlFile;
 import hudson.tasks.BuildStepMonitor;
@@ -85,11 +84,14 @@ public class QuestaVrmRegressionBuildAction implements RunAction2, StaplerProxy,
         return "questavrmreport";
     }
 
-    private boolean addCovHTMLAction(Collection<Action> actions, File dir, String path, int index) {
+    private boolean addCovHTMLAction(Collection<Action> actions, File dir, String path, int index, String mergefile) {
         File archiveDir = new File(dir,path);
-
+        String displayLink = "Latest Questa Coverage Report";
+        if(index!=0){
+            displayLink = "Latest "+com.mentor.questa.jenkins.Util.getFileName(mergefile)+ " Coverage Report";
+        }
         if (archiveDir.exists()) {
-            actions.add(new QuestaVrmHTMLAction(archiveDir, QuestaVrmHTMLArchiver.COV_ARCHIVE_DIR+(index==0?"":index), "index.html", "/plugin/mentor-questa-vrm/icons/coverage-report.png",  "Latest Questa Coverage Report"+(index==0?"":" "+index)));
+            actions.add(new QuestaVrmHTMLAction(archiveDir, QuestaVrmHTMLArchiver.COV_ARCHIVE_DIR+(index==0?"":index), "index.html", "/plugin/mentor-questa-vrm/icons/coverage-report.png", displayLink));
             return true;
         } 
         return false;
@@ -97,7 +99,7 @@ public class QuestaVrmRegressionBuildAction implements RunAction2, StaplerProxy,
 
     @Override
     public Collection<? extends Action> getProjectActions() {
-        Collection<Action> actions = new ArrayList<Action>();
+        Collection<Action> actions = new ArrayList<>();
         File vrmHtmlDir = new File(run.getParent().getRootDir(), QuestaVrmHTMLArchiver.HTML_ARCHIVE_DIR);
 
         if (htmlReport && vrmHtmlDir.exists()) {
@@ -105,14 +107,14 @@ public class QuestaVrmRegressionBuildAction implements RunAction2, StaplerProxy,
             QuestaVrmRegressionResult regressionResult = getResult();
             
             if (regressionResult.getCovHTMLReports().size() == 1) {
-                    if (!addCovHTMLAction(actions, vrmHtmlDir, regressionResult.getCovHTMLReports().get(0) , 0)) {
+                    if (!addCovHTMLAction(actions, vrmHtmlDir, regressionResult.getCovHTMLReports().get(0) , 0, null)) {
                         // The coverage report is not nested within the VRM HTML directory.
-                         addCovHTMLAction(actions,  run.getParent().getRootDir(), QuestaVrmHTMLArchiver.COV_ARCHIVE_DIR, 0);
+                         addCovHTMLAction(actions,  run.getParent().getRootDir(), QuestaVrmHTMLArchiver.COV_ARCHIVE_DIR, 0, null);
                     }
             } else {
                 int index = 1;
                 for (String covHtmlReport : regressionResult.getCovHTMLReports()) {
-                    addCovHTMLAction(actions, vrmHtmlDir, covHtmlReport, index++);
+                    addCovHTMLAction(actions, vrmHtmlDir, covHtmlReport, index++, regressionResult.getMergeFiles().get(index-2));
                 }
             }
         }
@@ -142,21 +144,21 @@ public class QuestaVrmRegressionBuildAction implements RunAction2, StaplerProxy,
             }
         }
 
-        this.questaVrmResultRef = new WeakReference<QuestaVrmRegressionResult>(result);
+        this.questaVrmResultRef = new WeakReference<>(result);
     }
 
     public synchronized QuestaVrmRegressionResult getResult() {
         QuestaVrmRegressionResult r;
         if (questaVrmResultRef == null) {
             r = load();
-            questaVrmResultRef = new WeakReference<QuestaVrmRegressionResult>(r);
+            questaVrmResultRef = new WeakReference<>(r);
         } else {
             r = questaVrmResultRef.get();
         }
 
         if (r == null) {
             r = load();
-            questaVrmResultRef = new WeakReference<QuestaVrmRegressionResult>(r);
+            questaVrmResultRef = new WeakReference<>(r);
         }
 
         return r;

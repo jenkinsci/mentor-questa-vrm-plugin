@@ -97,6 +97,7 @@ public class QuestaVrmHTMLAction implements ProminentProjectAction {
 
     private void processDirectory(@Nonnull File directory, @Nullable String path)  {
        File[] files = directory.listFiles();
+       if(files==null) return;
        try {
         for (File file : files) {
 

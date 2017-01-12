@@ -57,7 +57,7 @@ public class QuestaCoverageProjectExtension extends TransientActionFactory<Job> 
         final List<AbstractTestResultAction> buildActions = lastBuild
                 .getActions(AbstractTestResultAction.class);
         for (AbstractTestResultAction buildAction : buildActions) {
-            List<QuestaCoverageResult> coverageResults=CoverageUtil.getCoverageResult(buildAction);
+            List<QuestaCoverageResult> coverageResults= CoverageUtil.getCoverageResult(buildAction);
             int index = (coverageResults.size() == 1) ? 0 : 1;
             for (QuestaCoverageResult coverageResult : coverageResults) {
                 actions.add(new QuestaCoverageProjectAction(buildAction, coverageResult, index++));

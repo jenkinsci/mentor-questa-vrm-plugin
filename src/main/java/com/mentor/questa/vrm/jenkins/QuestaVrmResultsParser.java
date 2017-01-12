@@ -73,7 +73,7 @@ public class QuestaVrmResultsParser extends TestResultParser implements Serializ
             REGR_TIMESTAMP = "timestamp",
             REGR_LOGFILE = "logfile",
             REGR_COLS = "columns",
-            ABORT_MSG = "No results found, check your configuration.",
+            ABORT_MSG = "No results found!",
             REGR_SUMMARY = "json.js";
 
     @Override
@@ -265,7 +265,8 @@ public class QuestaVrmResultsParser extends TestResultParser implements Serializ
                 return regressionResult;
 
             }
-            return null;
+            logger.log(Level.WARNING, "Outdatted jsonfile: current time \'"+(buildTime + (nowSlave - nowMaster)) +"\', file last modified \'"+reportFile.lastModified()+"\', difference \'"+((buildTime + (nowSlave - nowMaster))- reportFile.lastModified())+"\'");
+            throw new AbortException("No recent reports found!");
 
         }
 

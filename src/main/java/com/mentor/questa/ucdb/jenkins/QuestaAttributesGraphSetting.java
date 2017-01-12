@@ -48,10 +48,10 @@ public class QuestaAttributesGraphSetting {
     private final HashSet<String> mergeLevelAttributes;
 
     public QuestaAttributesGraphSetting( List<String> trendableAttributes) {
-        testLevelAttributes = new HashSet<String>(Arrays.asList(new String[]{"SIMTIME", "CPUTIME", "MEMUSAGE", "CVGPEAKMEM", "CVGTOTALTIME", "CVGTOTALMEM"}));
-        mergeLevelAttributes = new HashSet<String>(trendableAttributes);
+        testLevelAttributes = new HashSet<>(Arrays.asList(new String[]{"SIMTIME", "CPUTIME", "MEMUSAGE", "CVGPEAKMEM", "CVGTOTALTIME", "CVGTOTALMEM"}));
+        mergeLevelAttributes = new HashSet<>(trendableAttributes);
         
-        testLevelGraphs = new ArrayList<QuestaAttributeGraphTab>();
+        testLevelGraphs = new ArrayList<>();
         
         testLevelGraphs.add(new QuestaAttributeGraphTab("CPU Time", "CPUTIME"));
         testLevelGraphs.add(new QuestaAttributeGraphTab("Simulation Time", "SIMTIME"));
@@ -60,7 +60,7 @@ public class QuestaAttributesGraphSetting {
         testLevelGraphs.add(new QuestaAttributeGraphTab("CVG Peak Mem", "CVGPEAKMEM"));
         testLevelGraphs.add(new QuestaAttributeGraphTab("CVG Peak Time", "CVGPEAKTIME"));
         
-        mergeLevelGraphs = new ArrayList<QuestaAttributeGraphTab>();
+        mergeLevelGraphs = new ArrayList<>();
         for (String attr: trendableAttributes){
             mergeLevelGraphs.add(new QuestaAttributeGraphTab(attr, attr));
         }

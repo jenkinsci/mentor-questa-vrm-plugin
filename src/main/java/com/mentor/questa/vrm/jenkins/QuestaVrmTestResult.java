@@ -107,6 +107,7 @@ public class QuestaVrmTestResult extends QuestaVrmAbstractResult {
         return super.getTestActions();
     }
     
+    @Override
     public Object getDynamic(String token, StaplerRequest req, StaplerResponse rsp) {
 
         if (mirrorTest == null) {
@@ -149,5 +150,5 @@ public class QuestaVrmTestResult extends QuestaVrmAbstractResult {
         sb.append(System.getProperty("line.separator"));
         return sb.toString();
     }
-
+    private static final long serialVersionUID = 1L;
 }

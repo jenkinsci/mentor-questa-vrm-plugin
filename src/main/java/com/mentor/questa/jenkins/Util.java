@@ -23,6 +23,7 @@
  */
 package com.mentor.questa.jenkins;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Functions;
 import hudson.util.Area;
 import hudson.util.TextFile;
@@ -34,20 +35,21 @@ import org.apache.tools.ant.types.FileSet;
 
 /**
  *
- * 
+ *
  */
 public class Util {
 
     /**
      * This method returns the possibly trimmed contents of the file. The file
      * can be relative to a workspace.
-     *
-     * @param keepLongStdio
-     * @param workspace
-     * @param filename
-     * @return
-     * @throws IOException
+     * 
+     * @param keepLongStdio Disable trimming long files 
+     * @param workspace the directory that contains the file
+     * @param filename input filename 
+     * @return the possibly trimmed file contents 
+     * @throws IOException 
      */
+    
     public static String possiblyTrimStdio(boolean keepLongStdio, File workspace, String filename) throws IOException {
         File file = new File(filename);
 
@@ -80,6 +82,7 @@ public class Util {
      * @return
      * @throws IOException
      */
+    @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "Expected behavior")
     private static String possiblyTrimStdio(boolean keepLongStdio, File stdio) throws IOException {
         final long len = stdio.length();
         if (keepLongStdio && len < 1024 * 1024) {
@@ -100,7 +103,7 @@ public class Util {
 
             middle = len - (headBytes + tailBytes);
         }
-        
+
         if (middle <= 0) {
             return FileUtils.readFileToString(stdio);
         }
@@ -144,4 +147,15 @@ public class Util {
         }
     }
 
+    public static String getFileName(String fileName) {
+
+        int startIndex = Math.max(0, Math.max(fileName.lastIndexOf('/'), fileName.lastIndexOf('\\'))+1);
+
+        int endIndex = fileName.lastIndexOf(".");
+        if (endIndex == -1) {
+            endIndex = fileName.length();
+        }
+        return fileName.substring(startIndex, endIndex);
+
+    }
 }

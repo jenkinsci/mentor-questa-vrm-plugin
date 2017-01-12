@@ -23,6 +23,7 @@
  */
 package com.mentor.questa.vrm.jenkins;
 
+import com.mentor.questa.ucdb.jenkins.QuestaUCDBResult;
 import hudson.Functions;
 import hudson.model.Api;
 import hudson.model.Run;
@@ -39,6 +40,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.PriorityQueue;
 import javax.servlet.ServletException;
 import javax.servlet.http.Cookie;
@@ -170,8 +172,8 @@ public class QuestaVrmHostAction implements RunAction2 {
                 if (action.getStartTime() == -1 || action.getDoneTime() == -1) {
                     continue;
                 }
-                pq.add(new Pair(action.getStartTimeDate(), action.getHost(), 1));
-                pq.add(new Pair(action.getDoneTimeDate(), action.getHost(), -1));
+                pq.add(new Pair(action.getStartTime(), action.getHost(), 1));
+                pq.add(new Pair(action.getDoneTime(), action.getHost(), -1));
                 hostCount.put(action.getHost(), 0);
             }
         }
@@ -185,22 +187,22 @@ public class QuestaVrmHostAction implements RunAction2 {
         HashSet<String> visited = new HashSet<String>();
         
         while (!pq.isEmpty()) {
-            long currentKey = pq.peek().date.getTime();
+            long currentKey = pq.peek().date;
 
-            while (!pq.isEmpty() && pq.peek().date.getTime() == currentKey) {
+            while (!pq.isEmpty() && pq.peek().date == currentKey) {
                 Pair current = pq.peek();
                 noOfTests = hostCount.get(current.host);
                 while (!pq.isEmpty() && pq.peek().compareTo(current) == 0) {
                     noOfTests += pq.poll().diff;
                 }
-                dsb.add(noOfTests, current.host, (current.date.getTime() - offset) / 1000);
+                dsb.add(noOfTests, current.host, (current.date - offset) / 1000);
                 hostCount.put(current.host, noOfTests);
                 visited.add(current.host);
 
             }
-            for (String host : hostCount.keySet()) {
-                if (!visited.contains(host)) {
-                    dsb.add(hostCount.get(host), host, (currentKey - offset) / 1000);
+            for (Map.Entry<String, Integer> host : hostCount.entrySet()) {
+                if (!visited.contains(host.getKey())) {
+                    dsb.add(host.getValue(), host.getKey(), (currentKey - offset) / 1000);
                 }
             }
             visited.clear();
@@ -333,14 +335,14 @@ public class QuestaVrmHostAction implements RunAction2 {
 
    
     
-   private class Pair implements Comparable<Pair> {
+   private static class Pair implements Comparable<Pair> {
 
-        public Date date;
+        public long date;
         public String host;
 
         public int diff;
 
-        public Pair(Date date, String host, int diff) {
+        public Pair(long date, String host, int diff) {
             this.date = date;
             this.host = host;
             this.diff = diff;
@@ -348,14 +350,34 @@ public class QuestaVrmHostAction implements RunAction2 {
 
         @Override
         public int compareTo(Pair o) {
-            if (date.getTime() < o.date.getTime()) {
+            if (date < o.date) {
                 return -1;
             }
-            if (date.getTime() > o.date.getTime()) {
+            if (date > o.date) {
                 return 1;
             }
-            return host.compareTo(o.host);
+            if(!host.equals(o.host)){
+               return host.compareTo(o.host);
+            }
+            if(diff!=o.diff){
+                return diff - o.diff;
+            }
+            return System.identityHashCode(this)- System.identityHashCode(o); 
         }
+
+        @Override
+        public boolean equals(Object obj) {
+            return (obj==this);
+        }
+
+        @Override
+        public int hashCode() {
+            return System.identityHashCode(this);
+        }
+        
+        
+       
+        
 
     }
 

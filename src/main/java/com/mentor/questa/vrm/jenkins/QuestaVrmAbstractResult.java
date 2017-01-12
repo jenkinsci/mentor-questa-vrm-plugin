@@ -28,6 +28,7 @@ import hudson.model.Api;
 import hudson.model.Item;
 import hudson.model.Run;
 import hudson.tasks.junit.CaseResult;
+import hudson.tasks.junit.Helper;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.TestObject;
 import hudson.tasks.test.TestResult;
@@ -119,15 +120,21 @@ public abstract class QuestaVrmAbstractResult extends TestResult {
     }
 
     public void setLaunchTime(Date launchTime) {
-        this.launchTime = launchTime;
+        if(launchTime!=null){
+            this.launchTime = new Date(launchTime.getTime());
+        }
     }
 
     public void setStartTime(Date startTime) {
-        this.startTime = startTime;
+        if(startTime!=null){
+            this.startTime = new Date(startTime.getTime());
+        }
     }
 
     public void setDoneTime(Date doneTime) {
-        this.doneTime = doneTime;
+        if(doneTime !=null){
+            this.doneTime =new Date(doneTime.getTime());
+        }
     }
 
     public void setTestplanCov(float testplanCov) {
@@ -233,21 +240,6 @@ public abstract class QuestaVrmAbstractResult extends TestResult {
     @Exported(visibility = 999)
     public String getAction() {
         return action;
-    }
-
-    @Exported(visibility = 999)
-    public Date getStartTimeDate() {
-        return startTime;
-    }
-
-    @Exported(visibility = 999)
-    public Date getDoneTimeDate() {
-        return doneTime;
-    }
-
-    @Exported(visibility = 999)
-    public Date getLaunchTimeDate() {
-        return launchTime;
     }
 
     @Exported(visibility = 999)
@@ -378,7 +370,6 @@ public abstract class QuestaVrmAbstractResult extends TestResult {
     /**
      * If this test failed, then return the build number when this test started
      * failing.
-     * @return 
      */
     @Override
     @Exported(visibility = 9)
@@ -524,7 +515,7 @@ public abstract class QuestaVrmAbstractResult extends TestResult {
                 buf.insert(0, Functions.getRelativeLinkTo(myBuildAsItem));
             } else {
                 
-                String hudsonRootUrl = Jenkins.getInstance().getRootUrl();
+                String hudsonRootUrl = Helper.getActiveInstance().getRootUrl();
                 if (hudsonRootUrl == null || hudsonRootUrl.length() == 0) {
                     return "";
 

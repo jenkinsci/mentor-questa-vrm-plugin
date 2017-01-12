@@ -78,7 +78,7 @@ THE SOFTWARE.
       </j:forEach>
   </table>
   <f:bottomButtonBar>
-        <a href="./flipMode">
+        <a  href="./flipMode">
             <j:choose>
                 <!-- needs to strip whitespace here -->
                 <j:when test="${mode}">Show Tests</j:when>

@@ -23,6 +23,7 @@
  */
 package com.mentor.questa.ucdb.jenkins;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Functions;
 
 import hudson.tasks.test.TestObject;
@@ -67,7 +68,7 @@ import org.kohsuke.stapler.StaplerResponse;
  *
  * 
  */
-public class QuestaCoverageHistory extends History {
+public class QuestaCoverageHistory extends QuestaHistory {
 
     private final QuestaCoverageResult coverageResult;
   
@@ -96,7 +97,7 @@ public class QuestaCoverageHistory extends History {
         redirectSubmitAttributes(req, rsp);
     }
     private QuestaAttributesGraphSetting getGraphSetting(QuestaAttributesSettingsMap graphMap){
-        return graphMap.getGraphSetting(coverageResult.getUcdbResult());
+        return graphMap.getGraphSetting(coverageResult.getUcdbResult().getCoverageId());
     }
     private QuestaAttributesGraphSetting getGraphSetting(QuestaCoverageProjectAction action){
         return getGraphSetting(action.getAttributesSetting());
@@ -105,7 +106,12 @@ public class QuestaCoverageHistory extends History {
         return coverageResult;
     }
 
-    
+    public boolean isNonZeroCoverage(){
+          Area area = calcDefaultSize();
+          CoverageGraphImpl impl = new CoverageGraphImpl("Coverage %", area.width, area.height, null);
+          impl.createDataSet();
+          return  impl.isNonZeroCoverage();
+    }
     public Set<String> getAvailableAttributes() {
         QuestaCoverageProjectAction action = getTestObject().getRun().getParent().getAction(QuestaCoverageProjectAction.class);
         if (action == null) {
@@ -117,7 +123,7 @@ public class QuestaCoverageHistory extends History {
 
    
     public Set<String> getTrendableAttributes() {
-        HashSet<String> attrSet = new HashSet<String>();
+        HashSet<String> attrSet = new HashSet<>();
         for (QuestaAttributeGraphTab pub : getAttributesPublishers()) {
             attrSet.addAll(pub.getAttributes());
         }
@@ -157,7 +163,7 @@ public class QuestaCoverageHistory extends History {
 
     private QuestaAttributeGraphTab getAttributePublisherMap(String metric) {
         if (attributePublisherMap == null || !attributePublisherMap.containsKey(metric)) {
-            attributePublisherMap = new HashMap<String, QuestaAttributeGraphTab>();
+            attributePublisherMap = new HashMap<>();
             for (QuestaAttributeGraphTab pub : getAttributesPublishers()) {
                 attributePublisherMap.put(pub.getSafeName(), pub);
             }
@@ -201,8 +207,8 @@ public class QuestaCoverageHistory extends History {
 
     abstract class AbstractCoverageGraphImpl extends GraphImpl {
 
-        protected final List<String> metrics;
-
+        final List<String> metrics;
+        private boolean nonZeroCoverage = false;
         public AbstractCoverageGraphImpl(String yLabel, int width, int height, List<String> metrics) {
             super(yLabel, width, height);
             this.metrics = metrics;
@@ -212,7 +218,7 @@ public class QuestaCoverageHistory extends History {
         private void addCoverage(Set<String> coverageKeys, DataSetBuilder<String, ChartLabel> data, ChartLabel label, QuestaCoverageResult currentCov) {
 
             for (Map.Entry<String, Double> coverageEntry : currentCov.getCoverageValues().entrySet()) {
-
+                nonZeroCoverage|= coverageEntry.getValue()>0;
                 data.add(coverageEntry.getValue(), coverageEntry.getKey(), label);
             }
             coverageKeys.removeAll(currentCov.getCoverageValues().keySet());
@@ -236,10 +242,10 @@ public class QuestaCoverageHistory extends History {
 
         @Override
         protected DataSetBuilder<String, ChartLabel> createDataSet() {
-            DataSetBuilder<String, ChartLabel> data = new DataSetBuilder<String, ChartLabel>();
+            DataSetBuilder<String, ChartLabel> data = new DataSetBuilder<>();
 
             List<TestResult> list = getList();
-            Set<String> coverageKeys = new HashSet<String>();
+            Set<String> coverageKeys = new HashSet<>();
 
             for (hudson.tasks.test.TestResult o : list) {
                 QuestaCoverageResult currentCov = CoverageUtil.getCoverageResult(o, coverageResult.getCoverageId());
@@ -256,9 +262,14 @@ public class QuestaCoverageHistory extends History {
             }
             return data;
         }
-    }
 
-    private class CoverageGraphMapImpl extends AbstractCoverageGraphImpl {
+        public boolean isNonZeroCoverage() {
+            return nonZeroCoverage;
+        }
+
+    }
+    @SuppressFBWarnings(value="SE_BAD_FIELD", justification="not applicable")
+    class CoverageGraphMapImpl extends AbstractCoverageGraphImpl{
 
         public CoverageGraphMapImpl(String yLabel, int width, int height, List<String> metrics) {
             super(yLabel, width, height, metrics);
@@ -324,7 +335,7 @@ public class QuestaCoverageHistory extends History {
                 public String generateToolTip(CategoryDataset dataset, int row, int column) {
                     ChartLabel label = (ChartLabel) dataset.getColumnKey(column);
                     QuestaCoverageResult currentCoverageResult = CoverageUtil.getCoverageResult(label.getO(), coverageResult.getCoverageId());
-                    if (coverageResult != null) {
+                    if (currentCoverageResult != null) {
                         return label.getO().getRun().getDisplayName() + ": " + currentCoverageResult.toolTipString(metrics);
                     }
 
@@ -344,7 +355,7 @@ public class QuestaCoverageHistory extends History {
     }
 
     class CoverageGraphImpl extends AbstractCoverageGraphImpl {
-
+        
         public CoverageGraphImpl(String yLabel, int width, int height, List<String> metrics) {
             super(yLabel, width, height, metrics);
         }

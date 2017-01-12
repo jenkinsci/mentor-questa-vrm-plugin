@@ -31,15 +31,17 @@ THE SOFTWARE.
     <j:set var="url" value="${from.urlName}/history"/>
     <j:set var="uniqueid" value="${h.generateId()}"/> 
     <div id="coverage-${uniqueid}">       
-        <div class="test-trend-caption" title="${covResult.coverageId}">
-            ${from.displayName}
-        </div>
-        <div align="center">
-            <st:include from="${history}" it="${history}" page="coverage-graph.jelly" /> 
-        </div>
-        <div style="text-align:right">
-            <a href="${from.urlName}/?width=800&amp;height=600">enlarge</a>
-        </div>
+    	<j:if test="${history.isNonZeroCoverage()}">
+        	<div class="test-trend-caption" title="${covResult.coverageId}">
+        	    ${from.displayName}
+        	</div>
+        	<div align="center">
+        	    <st:include from="${history}" it="${history}" page="coverage-graph.jelly" /> 
+        	</div>
+        	<div style="text-align:right">
+        	    <a href="${from.urlName}/?width=800&amp;height=600">enlarge</a>
+        	</div>
+		</j:if>
         <div align="center">
         <st:include from="${history}" it="${history}" page="attribute-graph.jelly" /> 
         </div>
@@ -50,7 +52,7 @@ THE SOFTWARE.
         </j:if>
     </div>
     <script>
-          document.addEventListener("DOMContentLoaded",function(){
+         document.addEventListener("DOMContentLoaded",function(){
           	onload();
           	var cov =document.getElementById("coverage-${uniqueid}");
           	cov.parentNode.appendChild(cov);

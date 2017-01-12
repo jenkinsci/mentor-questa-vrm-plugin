@@ -37,7 +37,7 @@ THE SOFTWARE.
         <div align="left">       
             <form action="${url}/submitAttributes" method="post">
                 <f:entry title="Attribute Graphs"  name="attributePublishers">
-                   	<div id="attrsetting"> 
+                   	<div > 
                         <f:repeatable var="pub"  name="attributePublishers" items="${it.attributesPublishers}">
                             <f:entry title="Graph Title" >
                                 <f:textbox name="graphName"  value="${pub.graphName}"/>    

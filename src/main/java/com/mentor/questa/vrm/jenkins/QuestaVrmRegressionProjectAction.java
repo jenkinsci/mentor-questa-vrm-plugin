@@ -85,7 +85,7 @@ public class QuestaVrmRegressionProjectAction  implements ProminentProjectAction
 
     public synchronized List<List<CoverageUtil.RowItem>> getRows(int n) {
 
-        ArrayList<List<CoverageUtil.RowItem>> rows = new ArrayList<List<CoverageUtil.RowItem>>();
+        ArrayList<List<CoverageUtil.RowItem>> rows = new ArrayList<>();
         int i = 0;
         
       
@@ -93,7 +93,7 @@ public class QuestaVrmRegressionProjectAction  implements ProminentProjectAction
             if (!(currentTestResultAction.getResult() instanceof TestResult)) {
                 continue;
             }  
-            ArrayList<CoverageUtil.RowItem> row = new ArrayList<CoverageUtil.RowItem>();
+            ArrayList<CoverageUtil.RowItem> row = new ArrayList<>();
             CoverageUtil.RowItem build = new CoverageUtil.RowItem(currentTestResultAction.run.getDisplayName());
             build.url = currentTestResultAction.run.getUrl();
             build.imgSrc = currentTestResultAction.run.getBuildStatusUrl();

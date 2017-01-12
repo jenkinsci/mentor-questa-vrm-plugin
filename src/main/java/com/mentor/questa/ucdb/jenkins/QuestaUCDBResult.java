@@ -49,8 +49,8 @@ public class QuestaUCDBResult extends QuestaCoverageResult {
     public QuestaUCDBResult(String coverageId, boolean shadow) {
         super(shadow);
         this.addAttributes("Filename", coverageId);
-        this.testsMap = new HashMap<String, QuestaCoverageResult>();
-        trendableAttributes = new HashMap<String, Double>();
+        this.testsMap = new HashMap<>();
+        trendableAttributes = new HashMap<>();
     }
 
     public void addTest(QuestaCoverageResult testResult) {
@@ -87,7 +87,7 @@ public class QuestaUCDBResult extends QuestaCoverageResult {
     @Override
     public ArrayList<String> getTrendableAttributes() {
 
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
         if (trendableAttributes != null) {
             result.addAll(trendableAttributes.keySet());
         }
@@ -102,7 +102,7 @@ public class QuestaUCDBResult extends QuestaCoverageResult {
 
     public ArrayList<String> getGlobalTrendableAttributes() {
 
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
         if (trendableAttributes != null) {
             result.addAll(trendableAttributes.keySet());
         }
@@ -148,14 +148,16 @@ public class QuestaUCDBResult extends QuestaCoverageResult {
     @Override
     public QuestaCoverageResult getTest(String testname) {
         if (containsTest(testname)) {
-            return testsMap.get(testname);
+            QuestaCoverageResult covResult = testsMap.get(testname);
+            covResult.setUcdbResult(this);
+            return covResult;
         }
         return null;
 
     }
     
     @Override
-    public synchronized void tally(TestResult testResult) {
+    public void tally(TestResult testResult) {
         if (this.testResult != null || !(testResult instanceof hudson.tasks.junit.TestResult)) {
             return;
         }
@@ -219,5 +221,5 @@ public class QuestaUCDBResult extends QuestaCoverageResult {
     public QuestaUCDBResult getUcdbResult() {
         return this;
     } 
-
+    private static final long serialVersionUID = 1L;
 }

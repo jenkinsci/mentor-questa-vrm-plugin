@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2016 mamer.
+ * Copyright 2016 Mentor Graphics.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -33,11 +33,6 @@ import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- *
- * @author mamer
- */
-
 
 public class QuestaVrmHTMLArchiver implements Serializable {
 
@@ -51,10 +46,13 @@ public class QuestaVrmHTMLArchiver implements Serializable {
         this.covHTMLReports = covHTMLReports;
     }
 
-    private File getOrCreateDir(File dir, String directoryName) {
+    private File getOrCreateDir(PrintStream logger, File dir, String directoryName) {
         File targetDir = new File(dir, directoryName);
         if (!targetDir.exists()) {
-            targetDir.mkdir();
+            if(!targetDir.mkdir()){
+                logger.println("[ERROR]: Unable to create HTML archive directory '"+directoryName+"'");
+            }
+                
         }
         return targetDir;
     }
@@ -62,7 +60,7 @@ public class QuestaVrmHTMLArchiver implements Serializable {
     private void archiveHTMLReport(Run<?, ?> build, TaskListener listener, FilePath fromDir, String src, String target) throws IOException, InterruptedException {
         listener.getLogger().println("Archiving  VRM HTML report...");
 
-        FilePath archiveDir = new FilePath(getOrCreateDir(build.getParent().getRootDir(), target));
+        FilePath archiveDir = new FilePath(getOrCreateDir(listener.getLogger(), build.getParent().getRootDir(), target));
 
         // check whether the directory that contains the HTML report exists
         if (!fromDir.exists()) {

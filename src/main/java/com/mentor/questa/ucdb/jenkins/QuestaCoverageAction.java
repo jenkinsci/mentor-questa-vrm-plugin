@@ -24,9 +24,8 @@
 package com.mentor.questa.ucdb.jenkins;
 
 import com.mentor.questa.jenkins.Util;
-import hudson.model.Run;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.tasks.junit.TestAction;
-import hudson.tasks.junit.TestResultAction;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.MetaTabulatedResult;
 import hudson.tasks.test.TestResult;
@@ -80,13 +79,16 @@ public class QuestaCoverageAction extends TestAction {
 
     }
 
+    private String getName(){
+        return ((index != 0) ? coverageResult.getDisplayID()+" ": "");
+    }
     public String getGraphName() {
-        return "Questa Coverage Results" + ((index != 0) ? " " + index : "");
+        return "Questa "+getName()+"Coverage Results" ;
     }
 
     @Override
     public String getDisplayName() {
-        return "Questa Coverage History" + ((index != 0) ? " " + index : "");
+        return "Questa "+getName()+"Coverage History";
     }
 
     @Override
@@ -163,6 +165,7 @@ public class QuestaCoverageAction extends TestAction {
      * @return true, if new image does NOT need to be generated, false
      * otherwise.
      */
+    @SuppressFBWarnings(value ="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",justification = "Null value not possible"  )
     protected boolean newGraphNotNeeded(StaplerRequest req, StaplerResponse rsp) {
         Calendar t = buildAction.owner.getProject().getLastBuild().getTimestamp();
         return req.checkIfModified(t, rsp);
@@ -225,6 +228,18 @@ public class QuestaCoverageAction extends TestAction {
             public Paint getItemPaint(final int row, final int column) {
                 return colors[column % colors.length];
             }
+
+            @Override
+            public boolean equals(Object obj) {
+                return super.equals(obj);
+            }
+
+            @Override
+            public int hashCode() {
+                return super.hashCode(); //To change body of generated methods, choose Tools | Templates.
+            }
+            
+            
         };
         cir.setMaximumBarWidth(0.35);
         plot.setRenderer(cir);

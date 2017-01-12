@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <div>
 This plugin adds the ability for Jenkins to publish results from Mentor Graphics Questa Verification Run Manager (VRM).
 </div>

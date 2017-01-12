@@ -39,6 +39,7 @@ import hudson.util.StackedAreaRenderer2;
 import java.awt.Color;
 import java.awt.Paint;
 import hudson.model.Action;
+import hudson.tasks.junit.Helper;
 import hudson.tasks.test.AbstractTestResultAction;
 import java.util.List;
 import org.jfree.chart.ChartFactory;
@@ -58,16 +59,16 @@ import org.kohsuke.stapler.Stapler;
  *
  * 
  */
-public  class History extends hudson.tasks.junit.History {
+public  class QuestaHistory extends hudson.tasks.junit.History {
 
     private final String actionUrl;
 
-    public History(TestObject testObject, String actionUrl) {
+    public QuestaHistory(TestObject testObject, String actionUrl) {
         super(testObject);
         this.actionUrl = actionUrl;
     }
 
-    public History(TestObject testObject) {
+    public QuestaHistory(TestObject testObject) {
         super(testObject);
         this.actionUrl= "";
     }
@@ -80,7 +81,7 @@ public  class History extends hudson.tasks.junit.History {
     public String getUrl() {
         Jenkins  instance =Jenkins.getInstance();
         if (instance!=null){
-        return  instance.getRootUrlFromRequest()+getTestObject().getRun().getUrl() + "/" + getUrlFromRun();
+            return  instance.getRootUrlFromRequest()+getTestObject().getRun().getUrl() + "/" + getUrlFromRun();
         } else {
             return getTestObject().getRun().getUrl() + "/" + getUrlFromRun();
         }
@@ -266,7 +267,12 @@ public  class History extends hudson.tasks.junit.History {
         private void generateUrl() {
             Run<?, ?> build = o.getRun();
             String buildLink = build.getUrl();
-            this.url = Jenkins.getInstance().getRootUrlFromRequest() + buildLink + getActionUrl() + o.getUrl();
+            this.url= "";
+            Jenkins inst = Helper.getActiveInstance();
+            if (inst!=null ){
+                this.url = inst.getRootUrlFromRequest() ;
+            }
+            this.url+= buildLink + getActionUrl() + o.getUrl();
         }
         
         @Override

@@ -2,7 +2,7 @@
 <!--
 The MIT License
 
-Copyright 2015 mamer.
+Copyright 2016 Mentor Graphics
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,11 @@ THE SOFTWARE.
 <?jelly escape-by-default='true'?>
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
   <table class="pane sortable bigtable" id="vrmregr">
-      
+     <style type="text/css">
+	 #questavrm-bottom .bottom-sticker-edge {
+	 	display:none;
+	 }
+	 </style>
       <j:set var="prevAll" value="${it.previousResult}"/>
       <tr class="headers">
         <td class="pane-header" id="action-col" style="display:none">Action</td>
@@ -75,7 +79,9 @@ THE SOFTWARE.
         </tr>
       </j:forEach>
   </table>
-  <f:bottomButtonBar>
-     	<a id="flipLink" onclick="flipView()" href="javascript:void(0);">Show Actions</a>
-   </f:bottomButtonBar>
+    <div  id="questavrm-bottom">
+    <f:bottomButtonBar>
+     	<button class="primary" id="flipLink" onclick="flipView()" href="javascript:void(0);">Show Actions</button>
+    </f:bottomButtonBar>
+    </div>
 </j:jelly>

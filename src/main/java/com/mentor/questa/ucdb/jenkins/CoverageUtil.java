@@ -31,7 +31,6 @@ import hudson.model.Job;
 import hudson.model.TopLevelItem;
 import hudson.tasks.junit.TestAction;
 import hudson.tasks.test.AbstractTestResultAction;
-import hudson.tasks.test.TestObject;
 import hudson.tasks.test.TestResult;
 import hudson.util.HeapSpaceStringConverter;
 import hudson.util.XStream2;
@@ -43,21 +42,24 @@ import java.util.Arrays;
 import java.util.List;
 import net.sf.json.JSONObject;
 
-
 /**
  *
- * 
+ *
  */
 public class CoverageUtil {
+
     public static final int TOTAL_COVERAGE_COLS = 7, COVERAGE_NUMBER_COLS = 3;
+
     public static List<QuestaCoverageResult> getCoverageResult(TestResult testResult) {
 
-        ArrayList< QuestaCoverageResult> coverageResults = new ArrayList<QuestaCoverageResult>();
+        ArrayList< QuestaCoverageResult> coverageResults = new ArrayList<>();
 
         for (TestAction ta : testResult.getTestActions()) {
             if (ta instanceof QuestaCoverageAction) {
                 QuestaCoverageAction coverageAction = (QuestaCoverageAction) ta;
-                coverageResults.add(coverageAction.getCoverageResult());
+                QuestaCoverageResult coverageResult = coverageAction.getCoverageResult();
+                coverageResult.tally(testResult);
+                coverageResults.add(coverageResult);
             }
 
         }
@@ -79,75 +81,71 @@ public class CoverageUtil {
 
     public static List<String> getCoverageSummaryHeaders() {
 
-        return Arrays.asList("Duration","Passed", "Failed", "Skipped", "Total", "CPU Time", "Total Coverage", "Testplan Coverage");
+        return Arrays.asList("Duration", "Passed", "Failed", "Skipped", "Total", "CPU Time", "Total Coverage", "Testplan Coverage");
     }
 
-    private static void insertCell(ArrayList<RowItem> row, RowItem insert){
-        for (int i =0; i< COVERAGE_NUMBER_COLS; i++){
+    private static void insertCell(ArrayList<RowItem> row, RowItem insert) {
+        for (int i = 0; i < COVERAGE_NUMBER_COLS; i++) {
             row.add(insert);
         }
-    
+
     }
-    private static void completeEmptyRow(ArrayList<RowItem> row,RowItem insert) {
-        for (int i =0; i< TOTAL_COVERAGE_COLS; i++){
+
+    private static void completeEmptyRow(ArrayList<RowItem> row, RowItem insert) {
+        for (int i = 0; i < TOTAL_COVERAGE_COLS; i++) {
             row.add(insert);
         }
     }
-    
+
     /**
      * This method returns the coverage summary rows from a testresultAction if
-     * it exists; The order of the rows are:Duration, Passed, Failed, Skipped, Total, CPU
-     * Time, Total Coverage, Testplan Coverage (id, Passed, Failed, Skipped,
-     * Total, CPU Time, Total Coverage, Testplan Coverage)*
-     *
-     * @param testResultAction
-     * @return
+     * it exists; The order of the rows are:Duration, Passed, Failed, Skipped,
+     * Total, CPU Time, Total Coverage, Testplan Coverage (id, Passed, Failed,
+     * Skipped, Total, CPU Time, Total Coverage, Testplan Coverage)*
+     * @param testResultAction the test result action 
+     * @return The summary rows starting from the test result action
      */
     public static List<RowItem> getCoverageSummaryRow(AbstractTestResultAction testResultAction) {
         TestResult testResult;
-        ArrayList<RowItem> row = new ArrayList<RowItem>();
+        ArrayList<RowItem> row = new ArrayList<>();
         RowItem emptyCell = new RowItem("--");
-        RowItem nestedCell= new RowItem("...");
+        RowItem nestedCell = new RowItem("...");
         row.add(new CoverageUtil.RowItem(testResultAction.run.getDurationString()));
         int defaultFailed = 0, defaultPassed = 0, defaultSkipped = 0;
-        ArrayList< QuestaCoverageResult> coverageResults = new ArrayList<QuestaCoverageResult>();
-        
+        ArrayList< QuestaCoverageResult> coverageResults = new ArrayList<>();
+
         if (testResultAction.getResult() instanceof TestResult) {
             testResult = (TestResult) testResultAction.getResult();
         } else {
             completeEmptyRow(row, emptyCell);
             return row;
         }
-        
-        for (TestAction ta : testResult.getTestActions()) {
-            if (ta instanceof QuestaCoverageAction) {
-                QuestaCoverageResult coverageResult = ((QuestaCoverageAction) ta).getCoverageResult();
-                // Filter out dummy tests inserted for having a history link...
-                if(!coverageResult.isShadow()){
-                    coverageResult.tally(testResult);
-                    coverageResults.add(coverageResult);
-                    defaultFailed +=  coverageResult.getFailCount();
-                    defaultPassed +=  coverageResult.getPassCount();
-                    defaultSkipped += coverageResult.getSkipCount();
-                }
-            }
 
+        for (QuestaCoverageResult coverageResult : getCoverageResult(testResult)) {
+            // Filter out dummy tests inserted for having a history link...
+            if (!coverageResult.isShadow()) {
+                coverageResult.tally(testResult);
+                coverageResults.add(coverageResult);
+                defaultFailed += coverageResult.getFailCount();
+                defaultPassed += coverageResult.getPassCount();
+                defaultSkipped += coverageResult.getSkipCount();
+            }
         }
 
         DecimalFormat formatter = new DecimalFormat("#0.00");
         DecimalFormat covFormatter = new DecimalFormat("#0.0000");
 
-        row.add(new RowItem(testResult.getPassCount() , testResult.getTotalCount(), formatter));
-        row.add(new RowItem(testResult.getFailCount() , testResult.getTotalCount(), formatter));
-        row.add(new RowItem(testResult.getSkipCount() , testResult.getTotalCount(), formatter));
-        row.add(new RowItem(testResult.getTotalCount() ));
+        row.add(new RowItem(testResult.getPassCount(), testResult.getTotalCount(), formatter));
+        row.add(new RowItem(testResult.getFailCount(), testResult.getTotalCount(), formatter));
+        row.add(new RowItem(testResult.getSkipCount(), testResult.getTotalCount(), formatter));
+        row.add(new RowItem(testResult.getTotalCount()));
 
         if (coverageResults.isEmpty()) {
             insertCell(row, emptyCell);
         } else if (coverageResults.size() == 1) {
             if (!coverageResults.get(0).isShadow()) {
                 row.add(new CoverageUtil.RowItem(Util.getTimeSpanString((long) coverageResults.get(0).getCpuTime() * 1000)));
-                row.add(new RowItem(coverageResults.get(0).getTotalCoverage(),covFormatter));
+                row.add(new RowItem(coverageResults.get(0).getTotalCoverage(), covFormatter));
                 row.add(new RowItem(coverageResults.get(0).getTestplanCov(), covFormatter));
             } else {
                 insertCell(row, emptyCell);
@@ -159,9 +157,8 @@ public class CoverageUtil {
         if (defaultFailed + defaultPassed + defaultSkipped == 0) {
             return row;
         }
-        
+
         // process nested rows... 
-        
         if (coverageResults.size() > 1) {
             if (testResult.getTotalCount() != defaultFailed + defaultPassed + defaultSkipped) {
                 defaultFailed = testResult.getFailCount() - defaultFailed;
@@ -218,7 +215,7 @@ public class CoverageUtil {
 
     }
 
-    public static QuestaCoverageAction getCoverageAction(TestObject t, String coverageId) {
+    public static QuestaCoverageAction getCoverageAction(TestResult t, String coverageId) {
 
         QuestaCoverageResult covResult = getCoverageResult(t, coverageId);
 
@@ -226,20 +223,18 @@ public class CoverageUtil {
 
     }
 
-    public static QuestaCoverageResult getCoverageResult(TestObject t, String coverageId) {
+    public static QuestaCoverageResult getCoverageResult(TestResult t, String coverageId) {
 
-        for (TestAction ta : t.getTestActions()) {
-            if (ta instanceof QuestaCoverageAction) {
-                QuestaCoverageAction coverageAction = (QuestaCoverageAction) ta;
-                
-                if ((coverageAction.getCoverageResult().getCoverageId().endsWith(coverageId) || coverageId.endsWith(coverageAction.getCoverageResult().getCoverageId()) )) {
-                    return coverageAction.getCoverageResult();
-                } else if (coverageAction.getCoverageResult() instanceof QuestaUCDBResult) {
-                    QuestaCoverageResult test = ((QuestaUCDBResult) coverageAction.getCoverageResult()).getTest(coverageId);
-                    if (test != null) {
-                        return test;
-                    }
+        for (QuestaCoverageResult coverageResult : getCoverageResult(t)) {
+
+            if ((coverageResult.getCoverageId().endsWith(coverageId) || coverageId.endsWith(coverageResult.getCoverageId()))) {
+                return coverageResult;
+            } else if (coverageResult instanceof QuestaUCDBResult) {
+                QuestaCoverageResult test = ((QuestaUCDBResult) coverageResult).getTest(coverageId);
+                if (test != null) {
+                    return test;
                 }
+
             }
 
         }
@@ -261,7 +256,6 @@ public class CoverageUtil {
 
     }
 
-
     public static class RowItem {
 
         public String url;
@@ -282,22 +276,23 @@ public class CoverageUtil {
 
         public RowItem(double value, double total, DecimalFormat format) {
             this(value);
-            this.toolTip = format.format(value/total * 100)+"%"; 
+            this.toolTip = format.format(value / total * 100) + "%";
         }
-        
+
         public RowItem(int value, double total, DecimalFormat format) {
             this(value);
-            this.toolTip = format.format(value/total * 100)+"%"; 
+            this.toolTip = format.format(value / total * 100) + "%";
         }
-        
+
         public RowItem(int value) {
-            this.value = value+"";
+            this.value = value + "";
         }
+
         public RowItem(double value) {
-            this.value = value+"";
+            this.value = value + "";
         }
-       
-        public RowItem(double value, DecimalFormat format){
+
+        public RowItem(double value, DecimalFormat format) {
             this(format.format(value));
         }
 
@@ -310,7 +305,7 @@ public class CoverageUtil {
                 jsonObj.element("imgSrc", imgSrc);
             }
             jsonObj.element("content", value);
-            jsonObj.element("tooltip", value);
+            jsonObj.element("tooltip", toolTip);
             return jsonObj;
         }
 
@@ -323,43 +318,39 @@ public class CoverageUtil {
         }
 
     }
-    
-    static  void saveAttributeSettingsMap( Job job , QuestaAttributesSettingsMap graphMap) {
-         
-       synchronized(job){
-        try {
-            getDataFile(job).write(graphMap);
-         
-        } catch (IOException e) {
-                
-        }
-     }
-       
-     
-    }
-    
 
-    
-    static QuestaAttributesSettingsMap loadAttributeSettingsMap(Job job , QuestaUCDBResult ucdbResult) {
+    static void saveAttributeSettingsMap(Job job, QuestaAttributesSettingsMap graphMap) {
+
+        synchronized (job) {
+            try {
+                getDataFile(job).write(graphMap);
+
+            } catch (IOException e) {
+
+            }
+        }
+
+    }
+
+    static QuestaAttributesSettingsMap loadAttributeSettingsMap(Job job, QuestaUCDBResult ucdbResult) {
         QuestaAttributesSettingsMap s;
         try {
-            s = (QuestaAttributesSettingsMap)getDataFile(job).read();
-         
+            s = (QuestaAttributesSettingsMap) getDataFile(job).read();
+
         } catch (IOException e) {
             s = new QuestaAttributesSettingsMap(ucdbResult);
         }
-        
+
         return s;
-        
+
     }
 
     static XmlFile getDataFile(Job job) {
         return new XmlFile(XSTREAM, new File(job.getRootDir(), "ucdbAttributes.xml"));
     }
-     
+
     private static final XStream XSTREAM = new XStream2();
 
-    
     static {
 
         XSTREAM.alias("graphtab", QuestaAttributeGraphTab.class);

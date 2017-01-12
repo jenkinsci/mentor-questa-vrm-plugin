@@ -52,7 +52,7 @@ THE SOFTWARE.
     <tbody>
       <j:forEach var="test" items="${it.getList(start, end)}">
 	<j:set var="covRes" value="${it.getCoverageResultFromTest(test)}"/>        
-        <j:if test="${covRes != null}">
+        <j:if test="${covRes != null &amp;&amp; !covRes.isShadow()}">
           <tr>
             <td class="pane">
               <a href="${app.rootUrl}${test.run.url}questavrmTestReport${p.url}" class="model-link inside">${test.run.fullDisplayName}</a>

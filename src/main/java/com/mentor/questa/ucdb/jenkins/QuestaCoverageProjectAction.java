@@ -1,7 +1,7 @@
 /*
  * The MIT License
  *
- * Copyright 2016 tellis.
+ * Copyright 2016 Mentor Graphics.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,15 +43,16 @@ public class QuestaCoverageProjectAction implements ProminentProjectAction {
     private WeakReference<QuestaAttributesSettingsMap> graphMapRef;
     
     private transient int index=0;
+  
     
     public QuestaCoverageProjectAction(AbstractTestResultAction testResultAction,QuestaCoverageResult coverageResult, int index) {
         this.job= testResultAction.run.getParent();
         this.index=index;
         this.history = new QuestaCoverageProjectHistory((TestObject)testResultAction.getResult(), coverageResult, getUrlName());
     }
-    
+   
     public String getGraphName() {
-        return "Coverage Result Trend"+(index==0?"": " "+index);
+        return (index==0?"": this.history.getCoverageResult().getDisplayID()+" ")+"Coverage Result Trend";
     }
 
     @Override
@@ -71,7 +72,7 @@ public class QuestaCoverageProjectAction implements ProminentProjectAction {
     
      public synchronized void setAttributesSetting(QuestaAttributesSettingsMap result) {
         CoverageUtil.saveAttributeSettingsMap(job, result);
-        this.graphMapRef = new WeakReference<QuestaAttributesSettingsMap>(result);
+        this.graphMapRef = new WeakReference<>(result);
     }
     
     public synchronized QuestaAttributesSettingsMap getAttributesSetting() {

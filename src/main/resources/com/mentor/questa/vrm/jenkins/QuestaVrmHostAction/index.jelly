@@ -42,6 +42,8 @@ THE SOFTWARE.
             <j:set var="trendQueryString1" value="" />
             <j:set var="trendQueryString2" value="" />
             <j:set var="queryString" value="${request.queryString}" />
+            <j:set var="width" value="${request.getParameter('width')}" />
+            <j:set var="height" value="${request.getParameter('height')}" />
             <j:if test="${queryString!=null}">
                 <j:set var="trendQueryString1" value="?${queryString}" />
                 <j:set var="trendQueryString2" value="&amp;${queryString}" />
@@ -60,7 +62,11 @@ THE SOFTWARE.
                     </j:choose>
                 </a> 
                 <st:nbsp/>
-                <a href="./?width=800&amp;height=600${trendQueryString2}">${%enlarge}</a>
+				
+                    <j:choose>
+                        <j:when test="${!empty(width) &amp;&amp; !empty(height)}"> <a href="./">restore</a></j:when>
+                		<j:otherwise><a href="./?width=800&amp;height=600${trendQueryString2}">${%enlarge}</a></j:otherwise>
+					</j:choose>
             </div>
         <st:include page="summarytable.jelly"/>
         <st:include page="table.jelly"/>

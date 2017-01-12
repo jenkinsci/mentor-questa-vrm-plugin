@@ -23,7 +23,7 @@
  */
 package com.mentor.questa.ucdb.jenkins;
 
-import com.mentor.questa.vrm.jenkins.QuestaVrmHTMLArchiver;
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.AbortException;
 import java.io.File;
 
@@ -107,7 +107,8 @@ public class QuestaCoverageTCLParser implements Serializable {
 
         return results;
     }
-
+    
+    @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "Expected behavior")
     private QuestaUCDBResult parseResultFromFile(String inputfile, String vcoverExec, FilePath workspace, Launcher launcher, Map<String, String> env, PrintStream logger) throws FileNotFoundException, IOException, InterruptedException {
 
         logger.println("Processing coverage results from: " + inputfile);
@@ -155,11 +156,11 @@ public class QuestaCoverageTCLParser implements Serializable {
             Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
             proc.join();
             vcoveroutput = outputstream.toString();
-            HashMap<String, String> attributes = new HashMap<String, String>();
+            HashMap<String, String> attributes = new HashMap<>();
             parseTrendableAttributes(attributes, vcoveroutput);
-            for (String attr : attributes.keySet()) {
+            for (Map.Entry<String, String> attrEntry : attributes.entrySet()) {
                 // trendable attributes are stored as double
-                mergeResult.addTrendableAttribute(attr, attributes.get(attr));
+                mergeResult.addTrendableAttribute(attrEntry.getKey(), attrEntry.getValue());
             }
 
         } catch (AbortException e) {
@@ -187,7 +188,7 @@ public class QuestaCoverageTCLParser implements Serializable {
      * @return FilePath[],
      */
     private FilePath[] findReport(String coverageResults, FilePath workspace) throws InterruptedException, IOException {
-        try {
+        
             File file = new File(coverageResults);
             // workaround if an absolute path is specified that is not relative to the workspace
             if (file.isAbsolute()) {
@@ -202,10 +203,6 @@ public class QuestaCoverageTCLParser implements Serializable {
             if (reports.length > 0) {
                 return reports;
             }
-
-        } catch (Exception e) {
-        }
-
         return null;
     }
 
@@ -216,7 +213,7 @@ public class QuestaCoverageTCLParser implements Serializable {
             @Override
             public ArrayList<FilePath> invoke(File file, VirtualChannel vc) throws IOException, InterruptedException {
                 final long nowSlave = System.currentTimeMillis();
-                ArrayList<FilePath> recentReports = new ArrayList<FilePath>();
+                ArrayList<FilePath> recentReports = new ArrayList<>();
 
                 for (FilePath report : reports) {
                     try {
@@ -328,13 +325,13 @@ public class QuestaCoverageTCLParser implements Serializable {
 
             if (result.isTest()) {
                 // filter out history records
-                if (!result.getCoverageId().equals(mergeResult.getCoverageId())) {
+                if (!result.getCoverageId().endsWith(mergeResult.getCoverageId())) {
                     mergeResult.addTest(result);
                 }
             } else {
                 // flatten non-test scopes (USERATTR|CHILDREN...)
-                for (String key : result.attributesValues.keySet()) {
-                    coverage.addAttributes(key, result.attributesValues.get(key));
+                for (Map.Entry<String, String> attrEntry : result.attributesValues.entrySet()) {
+                    coverage.addAttributes(attrEntry.getKey(), attrEntry.getValue());
                 }
             }
         }
@@ -416,7 +413,7 @@ public class QuestaCoverageTCLParser implements Serializable {
 
         public TclList() {
             super("List", null);
-            children = new LinkedList<TclToken>();
+            children = new LinkedList<>();
 
         }
 

@@ -50,6 +50,7 @@ import com.mentor.questa.jenkins.Util;
 import com.mentor.questa.ucdb.jenkins.CoverageUtil;
 import com.mentor.questa.ucdb.jenkins.QuestaCoverageResult;
 import com.mentor.questa.ucdb.jenkins.QuestaUCDBResult;
+import hudson.tasks.junit.Helper;
 
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
@@ -335,7 +336,7 @@ public class QuestaVrmRegressionResult extends MetaTabulatedResult {
                 buf.insert(0, Functions.getRelativeLinkTo(myBuildAsItem));
             } else {
                 // We're not in a stapler request. Okay, give up.
-                String hudsonRootUrl = Jenkins.getInstance().getRootUrl();
+                String hudsonRootUrl = Helper.getActiveInstance().getRootUrl();
                 if (hudsonRootUrl == null || hudsonRootUrl.length() == 0) {
 
                     return "";
@@ -390,7 +391,7 @@ public class QuestaVrmRegressionResult extends MetaTabulatedResult {
         QuestaVrmRegressionBuildAction tra = build.getAction(QuestaVrmRegressionBuildAction.class);
         return (tra == null) ? null : tra.getResult().findCorrespondingResult(this.getId());
     }
-
+    @Override
     public Object getDynamic(String token, StaplerRequest req, StaplerResponse rsp) {
 
         if (actions.containsKey(token)) {
@@ -427,11 +428,11 @@ public class QuestaVrmRegressionResult extends MetaTabulatedResult {
 
     @Override
     public void tally() {
-        actions = new HashMap<String, QuestaVrmAbstractResult>();
-        failedActions = new ArrayList<QuestaVrmAbstractResult>();
-        tests = new HashMap<String, QuestaVrmAbstractResult>();
-        failedTests = new ArrayList<QuestaVrmAbstractResult>();
-        failedNonTests = new ArrayList<QuestaVrmAbstractResult>();
+        actions = new HashMap<>();
+        failedActions = new ArrayList<>();
+        tests = new HashMap<>();
+        failedTests = new ArrayList<>();
+        failedNonTests = new ArrayList<>();
         passedActionCount = 0;
         failedActionCount = 0;
         skippedActionCount = 0;
@@ -506,21 +507,21 @@ public class QuestaVrmRegressionResult extends MetaTabulatedResult {
 
 	public Map<String, Map.Entry<Double, Double>> getTotalCovMap() {
 		if (totalCovMap == null) {
-			totalCovMap = new HashMap<String, Map.Entry<Double, Double>>();
-			populateTotalCoverageResulsts();
+			totalCovMap = new HashMap<>();
+			populateTotalCoverageResults();
 		}
 		return totalCovMap;
 	}
 
-	public void populateTotalCoverageResulsts() {
+	public void populateTotalCoverageResults() {
 		List<QuestaCoverageResult> coverageResults = CoverageUtil.getCoverageResult(this);
 		for (QuestaCoverageResult coverageResult : coverageResults) {
 			QuestaUCDBResult ucdbResult = coverageResult.getUcdbResult();
-			getTotalCovMap().put(ucdbResult.getCoverageId(), new AbstractMap.SimpleImmutableEntry<Double, Double>(
+			getTotalCovMap().put(ucdbResult.getCoverageId(), new AbstractMap.SimpleImmutableEntry<>(
 					ucdbResult.getTotalCoverage(), ucdbResult.getTestplanCov()));
 
 		}
 	}
     
-    
+    private static final long serialVersionUID = 1L;
 }

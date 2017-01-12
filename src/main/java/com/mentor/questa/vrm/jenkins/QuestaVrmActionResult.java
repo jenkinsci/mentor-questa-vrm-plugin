@@ -25,7 +25,6 @@ package com.mentor.questa.vrm.jenkins;
 
 import java.io.File;
 import java.io.IOException;
-import net.sf.json.JSONArray;
 import com.mentor.questa.jenkins.Util;
 import org.kohsuke.stapler.export.Exported;
 

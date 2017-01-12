@@ -31,12 +31,12 @@ THE SOFTWARE.
     <j:set var="end" value="${it.getEnd()}"/>
     <j:set var="rangeParameters" value="start=${start}&amp;end=${end}"/>
   
-   <j:if test="${it.historyAvailable()}">
+   <j:if test="${it.historyAvailable() &amp;&amp; it.isNonZeroCoverage()}">
     	<div class="test-trend-caption" title="${covResult.coverageId}">
     	    ${from.displayName}
     	</div>
        <div align="center">
-           <img id="coveragegraph" src="${url}/trendCoverage?${rangeParameters}" lazymap="${url}/trendCoverageMap?${rangeParameters}" alt="[Coverage graph]"/>
+           <img id="${covResult.coverageId}" src="${url}/trendCoverage?${rangeParameters}" lazymap="${url}/trendCoverageMap?${rangeParameters}" alt="[Coverage graph]"/>
        </div>
    </j:if>
     

@@ -23,6 +23,7 @@
  */
 package com.mentor.questa.ucdb.jenkins;
 
+import com.mentor.questa.jenkins.Util;
 import hudson.tasks.test.TestResult;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -49,7 +51,7 @@ public class QuestaCoverageResult implements Serializable {
     private double totalCoverage;
     private double testplanCov;
     private String fileName;
-	private boolean shadow;
+    private boolean shadow;
 
     private transient TestResult testResult;
     private transient QuestaCoverageAction coverageAction;
@@ -63,8 +65,8 @@ public class QuestaCoverageResult implements Serializable {
     public QuestaCoverageResult(boolean shadow) {
                 
         this.shadow= shadow;
-        this.coverageValues = new HashMap<String, Double>();
-        this.attributesValues = new HashMap<String, String>();
+        this.coverageValues = new HashMap<>();
+        this.attributesValues = new HashMap<>();
 		
     }
 
@@ -129,7 +131,9 @@ public class QuestaCoverageResult implements Serializable {
     public double getTestplanCov() {
         return testplanCov;
     }
-
+    public String getDisplayID(){
+        return Util.getFileName(fileName); 
+    }
     public String getCoverageId() {
         return fileName;
     }
@@ -234,11 +238,11 @@ public class QuestaCoverageResult implements Serializable {
         str.append(testplanCov);
         str.append("\n");
 
-        for (String key : coverageValues.keySet()) {
+        for (Map.Entry<String, Double> coverageEntry : getCoverageValues().entrySet()) {
             str.append("\t");
-            str.append(key);
+            str.append(coverageEntry.getKey());
             str.append(": ");
-            str.append(coverageValues.get(key));
+            str.append(coverageEntry.getValue());
             str.append("\n");
         }
         return str.toString();
@@ -260,7 +264,7 @@ public class QuestaCoverageResult implements Serializable {
     }
 
     private ArrayList<String> getUserDefinedAttributes() {
-        ArrayList<String> otherAttrs = new ArrayList<String>();
+        ArrayList<String> otherAttrs = new ArrayList<>();
         String[] predefined = new String[]{
             "VSIMARGS",
             "TESTCMD",
@@ -288,7 +292,7 @@ public class QuestaCoverageResult implements Serializable {
             "TESTSTATUS",
             "MERGELEVEL"
         };
-        HashSet<String> preSet = new HashSet<String>(Arrays.asList(predefined));
+        HashSet<String> preSet = new HashSet<>(Arrays.asList(predefined));
 
         for (String key : attributesValues.keySet()) {
             if (!preSet.contains(key)) {
@@ -300,7 +304,7 @@ public class QuestaCoverageResult implements Serializable {
     }
 
     public ArrayList<String> getTrendableAttributes() {
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
 
         for (String attr : attributesValues.keySet()) {
             if (isNumericAttribute(attr)) {
@@ -312,7 +316,7 @@ public class QuestaCoverageResult implements Serializable {
     }
 
     public ArrayList<String> getOtherAttributes() {
-        ArrayList<String> result = new ArrayList<String>();
+        ArrayList<String> result = new ArrayList<>();
         for (String key : getUserDefinedAttributes()) {
             result.add(key);
         }
@@ -375,4 +379,6 @@ public class QuestaCoverageResult implements Serializable {
     public QuestaUCDBResult getUcdbResult(){
         return ucdbResult;
     }
+    
+    private static final long serialVersionUID = 1L;
 }
