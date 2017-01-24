@@ -81,8 +81,10 @@ public class QuestaCoverageViewsTest extends AbstractViews {
         assertNotNull("Regression page not null", regressionPage );
         assertClickableImageByAlt("Coverage Bar Chart", wc, regressionPage, "[Coverage Results Chart]");
         assertEquals("A single coverage graph", 1,regressionPage.getByXPath("//img[@alt='[Coverage Results Chart]']").size());
-        assertSummaryLink(regressionPage, "coverage1",  "Questa merge_1 Coverage History");
-        assertSummaryLink(regressionPage, "coverage2",  "Questa merge_0 Coverage History");
+        //assertSummaryLink(regressionPage, "coverage1",  "Questa merge_1 Coverage History");
+        //assertSummaryLink(regressionPage, "coverage2",  "Questa merge_0 Coverage History");
+        assertSummaryLink(regressionPage, "coverage1",  "Coverage History");
+        assertSummaryLink(regressionPage, "coverage2",  "Coverage History");
        
 
     }
@@ -120,8 +122,10 @@ public class QuestaCoverageViewsTest extends AbstractViews {
         assertNotNull("Regression page not null", regressionPage );
         assertClickableImageByAlt("Coverage Bar Chart", wc, regressionPage, "[Coverage Results Chart]");
         assertEquals("Two coverage graphs", 2,regressionPage.getByXPath("//img[@alt='[Coverage Results Chart]']").size());
-        assertSummaryLink(regressionPage, "coverage1",  "Questa merge2 Coverage History");
-        assertSummaryLink(regressionPage, "coverage2",  "Questa merge Coverage History");
+        //assertSummaryLink(regressionPage, "coverage1",  "Questa merge2 Coverage History");
+        //assertSummaryLink(regressionPage, "coverage2",  "Questa merge Coverage History");
+        assertSummaryLink(regressionPage, "coverage1",  "Coverage History");
+        assertSummaryLink(regressionPage, "coverage2",  "Coverage History");
         
     }
     @LocalData
@@ -138,7 +142,7 @@ public class QuestaCoverageViewsTest extends AbstractViews {
         assertNotNull("Regression page not null", historyPage );
         
         assertClickableImageByAlt("Coverage Graph", wc, historyPage, "[Coverage graph]");
-        assertClickableImageByAlt("Attributes Graph", wc, historyPage, "[Metrics]");
+        //assertClickableImageByAlt("Attributes Graph", wc, historyPage, "[Metrics]");
         
         HtmlTable histTable =assertHtmlTable("History Table", historyPage, "testresult", 3);
         assertEquals("Table columns equal 8", 8,histTable.getRow(0).getCells().size());
