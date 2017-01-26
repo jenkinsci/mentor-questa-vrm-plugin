@@ -23,8 +23,10 @@
  */
 package com.mentor.questa.ucdb.jenkins;
 
+
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTable;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.mentor.questa.jenkins.AbstractViews;
 import hudson.model.FreeStyleProject;
 import static org.junit.Assert.*;
@@ -81,8 +83,9 @@ public class QuestaCoverageViewsTest extends AbstractViews {
         assertNotNull("Regression page not null", regressionPage );
         assertClickableImageByAlt("Coverage Bar Chart", wc, regressionPage, "[Coverage Results Chart]");
         assertEquals("A single coverage graph", 1,regressionPage.getByXPath("//img[@alt='[Coverage Results Chart]']").size());
-        //assertSummaryLink(regressionPage, "coverage1",  "Questa merge_1 Coverage History");
-        //assertSummaryLink(regressionPage, "coverage2",  "Questa merge_0 Coverage History");
+
+        rule.assertXPathResultsContainText(regressionPage, "//a", "Questa merge_1 Coverage History");
+        rule.assertXPathResultsContainText(regressionPage, "//a", "Questa merge_0 Coverage History");
         assertSummaryLink(regressionPage, "coverage1",  "Coverage History");
         assertSummaryLink(regressionPage, "coverage2",  "Coverage History");
        
@@ -122,8 +125,8 @@ public class QuestaCoverageViewsTest extends AbstractViews {
         assertNotNull("Regression page not null", regressionPage );
         assertClickableImageByAlt("Coverage Bar Chart", wc, regressionPage, "[Coverage Results Chart]");
         assertEquals("Two coverage graphs", 2,regressionPage.getByXPath("//img[@alt='[Coverage Results Chart]']").size());
-        //assertSummaryLink(regressionPage, "coverage1",  "Questa merge2 Coverage History");
-        //assertSummaryLink(regressionPage, "coverage2",  "Questa merge Coverage History");
+        rule.assertXPathResultsContainText(regressionPage, "//a", "Questa merge2 Coverage History");
+        rule.assertXPathResultsContainText(regressionPage, "//a", "Questa merge Coverage History");
         assertSummaryLink(regressionPage, "coverage1",  "Coverage History");
         assertSummaryLink(regressionPage, "coverage2",  "Coverage History");
         
@@ -137,12 +140,14 @@ public class QuestaCoverageViewsTest extends AbstractViews {
 
         JenkinsRule.WebClient wc = rule.createWebClient();
       
-        // Check that the regression result page contains a single graph and two histories
-        HtmlPage historyPage = wc.getPage(proj.getBuildByNumber(6), "questavrmreport/coverage1");
+        // Get the history page of merge_1 
+        HtmlPage regressionPage = wc.getPage(proj.getBuildByNumber(6), "questavrmreport");
+        HtmlAnchor anchor = regressionPage.getAnchorByText("Questa merge_1 Coverage History");
+        HtmlPage historyPage= anchor.click(); 
         assertNotNull("Regression page not null", historyPage );
         
         assertClickableImageByAlt("Coverage Graph", wc, historyPage, "[Coverage graph]");
-        //assertClickableImageByAlt("Attributes Graph", wc, historyPage, "[Metrics]");
+        assertClickableImageByAlt("Attributes Graph", wc, historyPage, "[Metrics]");
         
         HtmlTable histTable =assertHtmlTable("History Table", historyPage, "testresult", 3);
         assertEquals("Table columns equal 8", 8,histTable.getRow(0).getCells().size());
