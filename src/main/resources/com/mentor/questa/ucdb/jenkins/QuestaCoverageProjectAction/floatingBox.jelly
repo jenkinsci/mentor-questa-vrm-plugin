@@ -53,7 +53,6 @@ THE SOFTWARE.
     </div>
     <script>
          document.addEventListener("DOMContentLoaded",function(){
-          	onload();
           	var cov =document.getElementById("coverage-${uniqueid}");
           	cov.parentNode.appendChild(cov);
           });
