@@ -80,12 +80,14 @@ THE SOFTWARE.
  
     <div id="attribute-links" align="right">
         <j:if test="${!it.availableAttributes.isEmpty()}">
-            <l:hasPermission permission="${it.testObject.run.UPDATE}">
-                <a id="attribute-edit" href="${url}/edit-page" onclick="${h.isAutoRefresh(request) ? null : 'return replaceAttribute(&quot;'+url+'&quot;, &quot;'+uniqueid+'&quot;);'}">
-                    <l:icon class="icon-notepad icon-sm"/>
-                    edit attribute graphs
-                </a>
-            </l:hasPermission>
+        	<j:if test="${it.getShowAttributes()}">
+            	<l:hasPermission permission="${it.testObject.run.UPDATE}">
+                	<a id="attribute-edit" href="${url}/edit-page" onclick="${h.isAutoRefresh(request) ? null : 'return replaceAttribute(&quot;'+url+'&quot;, &quot;'+uniqueid+'&quot;);'}">
+                    	<l:icon class="icon-notepad icon-sm"/>
+                    	edit attribute graphs
+                	</a>
+            	</l:hasPermission>
+            </j:if>
             <script type="text/javascript" src="${resURL}/plugin/mentor-questa-vrm/js/attributes.js"/>
             <st:once>
                 <script type="text/javascript">

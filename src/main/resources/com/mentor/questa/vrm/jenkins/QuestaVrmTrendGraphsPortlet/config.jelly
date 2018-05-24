@@ -1,0 +1,20 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+    <!-- Creates fields for user to notify where results will be placed. -->  
+    	<f:entry title="Display Name" field="name">
+            <f:textbox  />    
+        </f:entry>
+        <f:entry>
+        	<f:checkbox title="Show build time trend graphs" field="buildTimeTrend" />
+        </f:entry>
+        <f:entry>
+        	<f:checkbox title="Show test result trend graphs" field="testResultsTrend" />
+        </f:entry>
+        <f:entry>
+        	<f:checkbox title="Show coverage result trend graphs" field="coverageResultsTrend" />
+        </f:entry>
+        <f:entry>
+        	<f:checkbox title="Show attributes trend graphs" field="attributesTrend" />
+        </f:entry>
+
+</j:jelly>

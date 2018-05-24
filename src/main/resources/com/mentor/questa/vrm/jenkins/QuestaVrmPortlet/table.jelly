@@ -76,7 +76,7 @@ THE SOFTWARE.
 		onload();
 		var img = document.createElement("img");
 		img.src="${resURL}/plugin/mentor-questa-vrm/icons/mentorlogo.png"
-		img.height="20"
+		img.height="14"
 		img.title="Mentor Graphics"
 		img.alt="[mentor logo]" 
 		document.getElementById("title-${it.id}").insertBefore( img, document.getElementById("title-${it.id}").childNodes[0]);

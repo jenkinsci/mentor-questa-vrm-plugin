@@ -61,7 +61,7 @@ import org.kohsuke.stapler.Stapler;
  */
 public  class QuestaHistory extends hudson.tasks.junit.History {
 
-    private final String actionUrl;
+    private String actionUrl;
 
     public QuestaHistory(TestObject testObject, String actionUrl) {
         super(testObject);
@@ -76,6 +76,10 @@ public  class QuestaHistory extends hudson.tasks.junit.History {
 
     public String getActionUrl() {
         return actionUrl;
+    }
+    
+    public void setActionUrl(String actionUrl) {
+    	this.actionUrl = actionUrl;
     }
     
     public String getUrl() {

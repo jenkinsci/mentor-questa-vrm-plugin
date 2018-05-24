@@ -23,20 +23,6 @@
  */
 package com.mentor.questa.ucdb.jenkins;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import hudson.Functions;
-
-import hudson.tasks.test.TestObject;
-
-import hudson.tasks.test.TestResult;
-import hudson.util.Area;
-
-import hudson.util.ColorPalette;
-import hudson.util.DataSetBuilder;
-
-import hudson.util.Graph;
-import hudson.util.ShiftedCategoryAxis;
-import hudson.util.StackedAreaRenderer2;
 import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Paint;
@@ -47,7 +33,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import javax.servlet.ServletException;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
@@ -64,6 +52,17 @@ import org.jfree.ui.RectangleInsets;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.Functions;
+import hudson.tasks.test.TestObject;
+import hudson.tasks.test.TestResult;
+import hudson.util.Area;
+import hudson.util.ColorPalette;
+import hudson.util.DataSetBuilder;
+import hudson.util.Graph;
+import hudson.util.ShiftedCategoryAxis;
+import hudson.util.StackedAreaRenderer2;
+
 /**
  *
  * 
@@ -71,6 +70,7 @@ import org.kohsuke.stapler.StaplerResponse;
 public class QuestaCoverageHistory extends QuestaHistory {
 
     private final QuestaCoverageResult coverageResult;
+    private boolean showAttributes = true;
   
 
     private Map<String, QuestaAttributeGraphTab> attributePublisherMap;
@@ -78,8 +78,14 @@ public class QuestaCoverageHistory extends QuestaHistory {
     public QuestaCoverageHistory(TestObject testObject, QuestaCoverageResult coverageResult,  String actionUrl) {
         super(testObject, actionUrl);
         this.coverageResult = coverageResult;
-       
-
+    }
+    
+    public void setShowAttributes(boolean showAttributes) {
+    	this.showAttributes = showAttributes;
+    }
+    
+    public boolean getShowAttributes() {
+    	return showAttributes;
     }
 
     protected void redirectSubmitAttributes(StaplerRequest req, StaplerResponse rsp) throws IOException, ServletException {
@@ -96,6 +102,7 @@ public class QuestaCoverageHistory extends QuestaHistory {
         action.setAttributesSetting(graphMap);
         redirectSubmitAttributes(req, rsp);
     }
+    
     private QuestaAttributesGraphSetting getGraphSetting(QuestaAttributesSettingsMap graphMap){
         return graphMap.getGraphSetting(coverageResult.getUcdbResult().getCoverageId());
     }
