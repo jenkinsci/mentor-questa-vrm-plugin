@@ -52,14 +52,45 @@ public class QuestaVrmTrendGraphsPortlet extends DashboardPortlet {
 	public boolean testResultsTrend;
 	public boolean coverageResultsTrend;
 	public boolean attributesTrend;
-	
+
     @DataBoundConstructor
     public QuestaVrmTrendGraphsPortlet(String name, String ID) {
         super(name);
         this.ID = ID;
     }
     
-    public List<QuestaCoverageHistory> getHistory(Job job) {
+    
+    public String getID() {
+		return ID;
+	}
+
+
+	public void setID(String iD) {
+		ID = iD;
+	}
+
+
+	public boolean getBuildTimeTrend() {
+		return buildTimeTrend;
+	}
+
+
+	public boolean getTestResultsTrend() {
+		return testResultsTrend;
+	}
+
+
+	public boolean getCoverageResultsTrend() {
+		return coverageResultsTrend;
+	}
+
+
+	public boolean getAttributesTrend() {
+		return attributesTrend;
+	}
+
+
+	public List<QuestaCoverageHistory> getHistory(Job job) {
     	List<QuestaCoverageProjectAction> myActions = job.getActions(QuestaCoverageProjectAction.class);
     	List<QuestaCoverageHistory> result = new ArrayList<>();
     	for (QuestaCoverageProjectAction action : myActions) {
