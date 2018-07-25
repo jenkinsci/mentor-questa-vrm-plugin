@@ -42,6 +42,7 @@ import java.io.ByteArrayOutputStream;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -273,8 +274,8 @@ public class QuestaCoverageTCLParser implements Serializable {
         }
     }
 
-    static QuestaUCDBResult parseCoverage(String coverageID, String vcoveroutput) throws AbortException {
-        TclList root = parseTcl(vcoveroutput, "Filename");
+    static QuestaUCDBResult parseCoverage(String coverageID, String input) throws AbortException {
+        TclList root = parseTcl(input, "Filename");
         QuestaUCDBResult mergeResult = new QuestaUCDBResult(coverageID);
 
         // First-level elements should contribute to the mergefile itself 
@@ -344,6 +345,7 @@ public class QuestaCoverageTCLParser implements Serializable {
      * @return
      */
     private static TclList genericParse(String line) throws AbortException {
+    	Map<String, TclToken> leafTokens = new HashMap<>();
         TclList root = new TclList();
         TclList temp;
         TclList current = root;
@@ -388,11 +390,22 @@ public class QuestaCoverageTCLParser implements Serializable {
 
                     //add only non-empty values.. 
                     if (value.toString().trim().length() > 0) {
-                        current.addChild(new TclToken(value.toString().trim(), current));
+                    	TclToken token = null;
+                    	String valueString = value.toString().trim();
+                    	if (!leafTokens.containsKey(valueString)) {
+                    		try {
+								token = new TclToken(valueString.getBytes("ASCII"));
+							} catch (UnsupportedEncodingException e) {
+								// e.printStackTrace();
+							}
+                    		leafTokens.put(valueString, token);
+                    	}
+                    	else {
+                    		token = leafTokens.get(valueString);
+                    	}
+                        current.addChild(token);
                     }
-
             }
-
         }
         if (current != root) {
             throw new AbortException("Poorly formed tcl list.");
@@ -408,11 +421,11 @@ public class QuestaCoverageTCLParser implements Serializable {
     }
 
     private static class TclList extends TclToken {
-
         private LinkedList<TclToken> children;
+        TclList parent;
 
         public TclList() {
-            super("List", null);
+            super(null);
             children = new LinkedList<>();
 
         }
@@ -444,13 +457,10 @@ public class QuestaCoverageTCLParser implements Serializable {
     }
 
     private static class TclToken {
+        private final byte[] value;
 
-        TclList parent;
-        private final String value;
-
-        public TclToken(String value, TclList parent) {
+        public TclToken(byte[] value) {
             this.value = value;
-            this.parent = parent;
         }
 
         public int size() {
@@ -459,7 +469,12 @@ public class QuestaCoverageTCLParser implements Serializable {
 
         @Override
         public String toString() {
-            return value;
+        	try {
+				return new String(value, "ASCII");
+			} catch (UnsupportedEncodingException e) {
+				// e.printStackTrace();
+			}
+            return null;
         }
 
     }
