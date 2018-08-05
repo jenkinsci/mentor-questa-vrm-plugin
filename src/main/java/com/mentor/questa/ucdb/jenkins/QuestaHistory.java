@@ -23,25 +23,10 @@
  */
 package com.mentor.questa.ucdb.jenkins;
 
-import hudson.model.AbstractBuild;
-import hudson.model.Run;
-
-import hudson.tasks.test.TestObject;
-import jenkins.model.Jenkins;
-import hudson.tasks.test.TestResult;
-import hudson.util.Area;
-import hudson.util.ChartUtil;
-import hudson.util.ColorPalette;
-import hudson.util.DataSetBuilder;
-import hudson.util.Graph;
-import hudson.util.ShiftedCategoryAxis;
-import hudson.util.StackedAreaRenderer2;
 import java.awt.Color;
 import java.awt.Paint;
-import hudson.model.Action;
-import hudson.tasks.junit.Helper;
-import hudson.tasks.test.AbstractTestResultAction;
 import java.util.List;
+
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
@@ -53,6 +38,19 @@ import org.jfree.chart.renderer.category.StackedAreaRenderer;
 import org.jfree.data.category.CategoryDataset;
 import org.jfree.ui.RectangleInsets;
 import org.kohsuke.stapler.Stapler;
+
+import com.mentor.questa.jenkins.ChartLabel;
+
+import hudson.tasks.test.TestObject;
+import hudson.tasks.test.TestResult;
+import hudson.util.Area;
+import hudson.util.ChartUtil;
+import hudson.util.ColorPalette;
+import hudson.util.DataSetBuilder;
+import hudson.util.Graph;
+import hudson.util.ShiftedCategoryAxis;
+import hudson.util.StackedAreaRenderer2;
+import jenkins.model.Jenkins;
 
 
 /**
@@ -214,7 +212,7 @@ public  class QuestaHistory extends hudson.tasks.junit.History {
                 public String generateToolTip(CategoryDataset dataset, int row,
                         int column) {
                     ChartLabel label = (ChartLabel) dataset.getColumnKey(column);
-                    return label.o.getRun().getDisplayName() + " : "
+                    return label.getO().getRun().getDisplayName() + " : "
                             + dataset.getValue(row, column);
                 }
             };
@@ -228,91 +226,6 @@ public  class QuestaHistory extends hudson.tasks.junit.History {
 
             return chart;
         }
-    }
-
-    protected class ChartLabel implements Comparable<ChartLabel> {
-
-        TestResult o;
-
-        String url;
-
-        public ChartLabel(TestResult o) {
-            this.o = o;
-            this.url = null;
-
-        }
-
-        public TestResult getO() {
-            return o;
-        }
-        private Class getTestResultClass(){
-            try{
-                return Class.forName("com.mentor.questa.vrm.jenkins.QuestaVrmRegressionBuildAction");
-            }catch (ClassNotFoundException e){
-                return AbstractTestResultAction.class;
-            }
-            
-        }
-        public String getActionUrl() {
-            String actionUrl = o.getTestResultAction().getUrlName(); 
-            Action questaAction = o.getRun().getAction(getTestResultClass());
-            if (questaAction!=null) {
-                actionUrl = questaAction.getUrlName();
-            }
-            return actionUrl;
-        }
-        public String getUrl() {
-            if (this.url == null) {
-                generateUrl();
-            }
-            return url;
-        }
-
-        private void generateUrl() {
-            Run<?, ?> build = o.getRun();
-            String buildLink = build.getUrl();
-            this.url= "";
-            Jenkins inst = Helper.getActiveInstance();
-            if (inst!=null ){
-                this.url = inst.getRootUrlFromRequest() ;
-            }
-            this.url+= buildLink + getActionUrl() + o.getUrl();
-        }
-        
-        @Override
-        public int compareTo(ChartLabel that) {
-            return this.o.getRun().number - that.o.getRun().number;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (!(o instanceof ChartLabel)) {
-                return false;
-            }
-            ChartLabel that = (ChartLabel) o;
-            return this.o == that.o;
-        }
-
-        public Color getColor() {
-          return null;
-        }
-
-        @Override
-        public int hashCode() {
-            return o.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            Run<?, ?> run = o.getRun();
-            String l = run.getDisplayName();
-            String s = run instanceof AbstractBuild ? ((AbstractBuild) run).getBuiltOnStr() : null;
-            if (s != null) {
-                l += ' ' + s;
-            }
-            return l;
-        }
-
     }
 
 }

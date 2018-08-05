@@ -57,122 +57,139 @@ import java.util.Map;
  */
 public class QuestaCoverageTCLParser implements Serializable {
 
-    public QuestaCoverageTCLParser() {
+	public QuestaCoverageTCLParser() {
 
-    }
+	}
 
-    private String getRelativePath(FilePath workspace, String path) {
+	private String getRelativePath(FilePath workspace, String path) {
 
-        String wsPath = workspace.getRemote();
-        if (wsPath != null && path.startsWith(wsPath)) {
-            return path.substring(wsPath.length() + 1);
-        }
-        return path;
+		String wsPath = workspace.getRemote();
+		if (wsPath != null && path.startsWith(wsPath)) {
+			return path.substring(wsPath.length() + 1);
+		}
+		return path;
 
-    }
+	}
 
-    public HashMap<String, QuestaUCDBResult> parseResult(String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
-        return parseResult(new HashMap<String, QuestaUCDBResult>(), coverageResults, vcoverExec, run, workspace, launcher, listener, null);
-    }
+	public HashMap<String, QuestaUCDBResult> parseResult(String coverageResults, String vcoverExec, Run<?, ?> run,
+			FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
+		return parseResult(new HashMap<String, QuestaUCDBResult>(), coverageResults, vcoverExec, run, workspace,
+				launcher, listener, null);
+	}
 
-    public HashMap<String, QuestaUCDBResult> parseResult(HashMap<String, QuestaUCDBResult> results, String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
-	return parseResult(results, coverageResults,  vcoverExec, run, workspace,launcher, listener, null); 
-    }
-    public HashMap<String, QuestaUCDBResult> parseResult(HashMap<String, QuestaUCDBResult> results, String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher, TaskListener listener, Date regressionBegin) throws InterruptedException, IOException {
-        final long buildTime = regressionBegin==null? run.getTimestamp().getTimeInMillis(): regressionBegin.getTime();
-        PrintStream logger = listener.getLogger();
+	public HashMap<String, QuestaUCDBResult> parseResult(HashMap<String, QuestaUCDBResult> results,
+			String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher,
+			TaskListener listener) throws InterruptedException, IOException {
+		return parseResult(results, coverageResults, vcoverExec, run, workspace, launcher, listener, null);
+	}
 
-        //get the output of this build
-        logger.println("Trying to locate coverage results \'"+coverageResults+"\' from this run...");
+	public HashMap<String, QuestaUCDBResult> parseResult(HashMap<String, QuestaUCDBResult> results,
+			String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher,
+			TaskListener listener, Date regressionBegin) throws InterruptedException, IOException {
+		final long buildTime = regressionBegin == null ? run.getTimestamp().getTimeInMillis()
+				: regressionBegin.getTime();
+		PrintStream logger = listener.getLogger();
 
-        FilePath[] reports = findReport(coverageResults, workspace);
+		// get the output of this build
+		logger.println("Trying to locate coverage results \'" + coverageResults + "\' from this run...");
 
-        if (reports == null || reports.length == 0) {
-            logger.println("***[Error]: Could not find any UCDB files."
-                    + " Coverage results for this run will not be recorded. ***");
-            return results;
-        }
+		FilePath[] reports = findReport(coverageResults, workspace);
 
-        //If multiple runs have happened in the same workspace, we need to ensure we're reporting on the most recent run
-        ArrayList<FilePath> recentReports = mostRecent(buildTime, workspace, reports);
-        // ensure we have a valid file path
-        if (recentReports.isEmpty()) {
-            logger.println("[ERROR]: No recent coverage reports.  Returning empty coverage results.");
-            return results;
-        }
+		if (reports == null || reports.length == 0) {
+			logger.println("***[Error]: Could not find any UCDB files."
+					+ " Coverage results for this run will not be recorded. ***");
+			return results;
+		}
 
-        for (FilePath report : recentReports) {
-            QuestaUCDBResult mergeResult = parseResultFromFile(report.getRemote(), vcoverExec, workspace, launcher, run.getEnvironment(listener), logger);
-            results.put(mergeResult.getCoverageId(), mergeResult);
-        }
+		// If multiple runs have happened in the same workspace, we need to ensure we're
+		// reporting on the most recent run
+		ArrayList<FilePath> recentReports = mostRecent(buildTime, workspace, reports);
+		// ensure we have a valid file path
+		if (recentReports.isEmpty()) {
+			logger.println("[ERROR]: No recent coverage reports.  Returning empty coverage results.");
+			return results;
+		}
 
-        return results;
-    }
-    
-    @SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "Expected behavior")
-    private QuestaUCDBResult parseResultFromFile(String inputfile, String vcoverExec, FilePath workspace, Launcher launcher, Map<String, String> env, PrintStream logger) throws FileNotFoundException, IOException, InterruptedException {
+		for (FilePath report : recentReports) {
+			QuestaUCDBResult mergeResult = parseResultFromFile(report.getRemote(), vcoverExec, workspace, launcher,
+					run.getEnvironment(listener), logger);
+			results.put(mergeResult.getCoverageId(), mergeResult);
+		}
 
-        logger.println("Processing coverage results from: " + inputfile);
-        ByteArrayOutputStream outputstream = new ByteArrayOutputStream();
-        
-        QuestaUCDBResult mergeResult = new QuestaUCDBResult(getRelativePath(workspace, inputfile));
+		return results;
+	}
 
-        // Processing vcover stats output
-        String cmd = vcoverExec + " stats -stats=none -prec 4 -tcl " + inputfile;
-        String vcoveroutput = "";
-        try {
-            Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
-            proc.join();
-            vcoveroutput = outputstream.toString();
-            mergeResult = parseCoverage(mergeResult.getCoverageId(),vcoveroutput);
-        } catch (AbortException e) {
-            logger.println("[ERROR]: Error processing UCDB \'" + inputfile + "\', with command \'" + cmd + "\'.");
-            logger.println("Command Output:" + vcoveroutput);
-        } catch (IOException ie) {
-            logger.println("[ERROR]: Vcover executable \'" + vcoverExec + "\' not found. Returning empty coverage results.");
-            return mergeResult;
-        }
+	@SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "Expected behavior")
+	private QuestaUCDBResult parseResultFromFile(String inputfile, String vcoverExec, FilePath workspace,
+			Launcher launcher, Map<String, String> env, PrintStream logger)
+			throws FileNotFoundException, IOException, InterruptedException {
 
-        //Processing UCDB Attributes 
-        cmd = vcoverExec + " attribute  -ucdb -tcl  -stats=none " + inputfile;
-        outputstream.reset();
+		logger.println("Processing coverage results from: " + inputfile);
+		ByteArrayOutputStream outputstream = new ByteArrayOutputStream();
 
-        try {
-            Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
-            proc.join();
-            vcoveroutput = outputstream.toString();
-            parseTrendableAttributes(mergeResult.attributesValues, vcoveroutput);
-        } catch (AbortException e) {
-            logger.println("[ERROR]: During processing global attributes of UCDB \'" + inputfile + "\', with command \'" + cmd + "\'.  Ignoring attributes.");
-            logger.println("Command Output:" + vcoveroutput);
-        } catch (IOException ie) {
-            logger.println("[ERROR]: Vcover executable \'" + vcoverExec + "\' not found. Returning empty coverage results.");
-            return mergeResult;
-        }
+		QuestaUCDBResult mergeResult = new QuestaUCDBResult(getRelativePath(workspace, inputfile));
 
-        // Processing trendable attributes
-        cmd = vcoverExec + " attribute  -ucdb -tcl -trendable -stats=none " + inputfile;
-        outputstream.reset();
-        try {
-            Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
-            proc.join();
-            vcoveroutput = outputstream.toString();
-            HashMap<String, String> attributes = new HashMap<>();
-            parseTrendableAttributes(attributes, vcoveroutput);
-            for (Map.Entry<String, String> attrEntry : attributes.entrySet()) {
-                // trendable attributes are stored as double
-                mergeResult.addTrendableAttribute(attrEntry.getKey(), attrEntry.getValue());
-            }
+		// Processing vcover stats output
+		String cmd = vcoverExec + " stats -stats=none -prec 4 -tcl " + inputfile;
+		String vcoveroutput = "";
+		try {
+			Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
+			proc.join();
+			vcoveroutput = outputstream.toString();
+			mergeResult = parseCoverage(mergeResult.getCoverageId(), vcoveroutput);
+		} catch (AbortException e) {
+			logger.println("[ERROR]: Error processing UCDB \'" + inputfile + "\', with command \'" + cmd + "\'.");
+			logger.println("Command Output:" + vcoveroutput);
+		} catch (IOException ie) {
+			logger.println(
+					"[ERROR]: Vcover executable \'" + vcoverExec + "\' not found. Returning empty coverage results.");
+			return mergeResult;
+		}
 
-        } catch (AbortException e) {
-            logger.println("[ERROR]: During processing trendable global attributes of UCDB \'" + inputfile + "\', with command \'" + cmd + "\'.  Ignoring trendable attributes.");
-            logger.println("Command Output:" + vcoveroutput);
-        } catch (IOException e) {
-            logger.println("[Warning]: Accessing UCDB trendable attributes require Questa version > 10.5a . Ignoring trendable attributes.");
-        }
+		// Processing UCDB Attributes
+		cmd = vcoverExec + " attribute  -ucdb -tcl  -stats=none " + inputfile;
+		outputstream.reset();
 
-        return mergeResult;
-    }
+		try {
+			Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
+			proc.join();
+			vcoveroutput = outputstream.toString();
+			parseTrendableAttributes(mergeResult.attributesValues, vcoveroutput);
+		} catch (AbortException e) {
+			logger.println("[ERROR]: During processing global attributes of UCDB \'" + inputfile + "\', with command \'"
+					+ cmd + "\'.  Ignoring attributes.");
+			logger.println("Command Output:" + vcoveroutput);
+		} catch (IOException ie) {
+			logger.println(
+					"[ERROR]: Vcover executable \'" + vcoverExec + "\' not found. Returning empty coverage results.");
+			return mergeResult;
+		}
+
+		// Processing trendable attributes
+		cmd = vcoverExec + " attribute  -ucdb -tcl -trendable -stats=none " + inputfile;
+		outputstream.reset();
+		try {
+			Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
+			proc.join();
+			vcoveroutput = outputstream.toString();
+			HashMap<String, String> attributes = new HashMap<>();
+			parseTrendableAttributes(attributes, vcoveroutput);
+			for (Map.Entry<String, String> attrEntry : attributes.entrySet()) {
+				// trendable attributes are stored as double
+				mergeResult.addTrendableAttribute(attrEntry.getKey(), attrEntry.getValue());
+			}
+
+		} catch (AbortException e) {
+			logger.println("[ERROR]: During processing trendable global attributes of UCDB \'" + inputfile
+					+ "\', with command \'" + cmd + "\'.  Ignoring trendable attributes.");
+			logger.println("Command Output:" + vcoveroutput);
+		} catch (IOException e) {
+			logger.println(
+					"[Warning]: Accessing UCDB trendable attributes require Questa version > 10.5a . Ignoring trendable attributes.");
+		}
+
+		return mergeResult;
+	}
 
 	private Proc launchQuiet(FilePath workspace, Launcher launcher, Map<String, String> env,
 			ByteArrayOutputStream outputstream, String cmd) throws IOException {
@@ -182,334 +199,330 @@ public class QuestaCoverageTCLParser implements Serializable {
 		Proc proc = launcher.launch(ps);
 		return proc;
 	}
-    
-    /**
-     *
-     * @param workspace
-     * @return FilePath[],
-     */
-    private FilePath[] findReport(String coverageResults, FilePath workspace) throws InterruptedException, IOException {
-        
-            File file = new File(coverageResults);
-            // workaround if an absolute path is specified that is not relative to the workspace
-            if (file.isAbsolute()) {
-                FilePath filePath = new FilePath(file);
-                if (filePath.exists()) {
-                    return new FilePath[]{filePath};
-                }
-                return null;
-            }
-            FilePath[] reports = workspace.list(coverageResults);
 
-            if (reports.length > 0) {
-                return reports;
-            }
-        return null;
-    }
+	/**
+	 *
+	 * @param workspace
+	 * @return FilePath[],
+	 */
+	private FilePath[] findReport(String coverageResults, FilePath workspace) throws InterruptedException, IOException {
 
-    private ArrayList<FilePath> mostRecent(final long buildTime, FilePath workspace, final FilePath[] reports) throws IOException, InterruptedException {
-        final long nowMaster = System.currentTimeMillis();
-        return workspace.act(new jenkins.SlaveToMasterFileCallable<ArrayList<FilePath>>() {
+		File file = new File(coverageResults);
+		// workaround if an absolute path is specified that is not relative to the
+		// workspace
+		if (file.isAbsolute()) {
+			FilePath filePath = new FilePath(file);
+			if (filePath.exists()) {
+				return new FilePath[] { filePath };
+			}
+			return null;
+		}
+		FilePath[] reports = workspace.list(coverageResults);
 
-            @Override
-            public ArrayList<FilePath> invoke(File file, VirtualChannel vc) throws IOException, InterruptedException {
-                final long nowSlave = System.currentTimeMillis();
-                ArrayList<FilePath> recentReports = new ArrayList<>();
+		if (reports.length > 0) {
+			return reports;
+		}
+		return null;
+	}
 
-                for (FilePath report : reports) {
-                    try {
-                        long lastmod = report.lastModified();
-                        if ((buildTime + (nowSlave - nowMaster) - 3000) <= lastmod) {
-                            recentReports.add(report);
-                        }
-                    } catch (IOException e) {
+	private ArrayList<FilePath> mostRecent(final long buildTime, FilePath workspace, final FilePath[] reports)
+			throws IOException, InterruptedException {
+		final long nowMaster = System.currentTimeMillis();
+		return workspace.act(new jenkins.SlaveToMasterFileCallable<ArrayList<FilePath>>() {
 
-                    } catch (InterruptedException e) {
+			@Override
+			public ArrayList<FilePath> invoke(File file, VirtualChannel vc) throws IOException, InterruptedException {
+				final long nowSlave = System.currentTimeMillis();
+				ArrayList<FilePath> recentReports = new ArrayList<>();
 
-                    }
-                }
-                return recentReports;
-            }
+				for (FilePath report : reports) {
+					try {
+						long lastmod = report.lastModified();
+						if ((buildTime + (nowSlave - nowMaster) - 3000) <= lastmod) {
+							recentReports.add(report);
+						}
+					} catch (IOException e) {
 
-        });
+					} catch (InterruptedException e) {
 
-    }
+					}
+				}
+				return recentReports;
+			}
 
-    private static TclList parseTcl(String in, String firstToken) throws AbortException {
-        TclList root = genericParse(in);
-        TclToken current = root;
-        while (current instanceof TclList && current.size() > 0) {
-            current = ((TclList) current).getChildren().getFirst();
-        }
-        if (!current.toString().startsWith(firstToken)) {
-            throw new AbortException("Unexpected return value");
-        }
-        return root;
-    }
+		});
 
-    static void parseTrendableAttributes(HashMap attributes, String vcoverOutput ) throws AbortException {
-        TclList root = parseTcl(vcoverOutput, "ATTRIBUTE");
-        attributes.clear();
+	}
 
-        LinkedList<TclToken> list = root.getChildren();
+	private static TclList parseTcl(String in, String firstToken) throws AbortException {
+		TclList root = genericParse(in);
+		TclToken current = root;
+		while (current instanceof TclList && current.size() > 0) {
+			current = ((TclList) current).getChildren().getFirst();
+		}
+		if (!current.toString().startsWith(firstToken)) {
+			throw new AbortException("Unexpected return value");
+		}
+		return root;
+	}
 
-        // first entry is ATTRIBUTE UCDB, neglect it..
-        list.removeFirst();
+	static void parseTrendableAttributes(HashMap attributes, String vcoverOutput) throws AbortException {
+		TclList root = parseTcl(vcoverOutput, "ATTRIBUTE");
+		attributes.clear();
 
-        for (TclToken child : list) {
-            if (child instanceof TclList) {
-                TclList childList = (TclList) child;
-                if (child.size() == 2 && childList.areLeafChildren()) {
-                    attributes.put(childList.getChildren().getFirst().toString(), childList.getChildren().getLast().toString());
-                }
-            } else {
-                String[] key_value = child.toString().split(" ");
-                if (key_value.length != 2) {
-                    continue;
-                }
-                attributes.put(key_value[0], key_value[1]);
+		LinkedList<TclToken> list = root.getChildren();
 
-            }
+		// first entry is ATTRIBUTE UCDB, neglect it..
+		list.removeFirst();
 
-        }
-    }
+		for (TclToken child : list) {
+			if (child instanceof TclList) {
+				TclList childList = (TclList) child;
+				if (child.size() == 2 && childList.areLeafChildren()) {
+					attributes.put(childList.getChildren().getFirst().toString(),
+							childList.getChildren().getLast().toString());
+				}
+			} else {
+				String[] key_value = child.toString().split(" ");
+				if (key_value.length != 2) {
+					continue;
+				}
+				attributes.put(key_value[0], key_value[1]);
 
-    static QuestaUCDBResult parseCoverage(String coverageID, String input) throws AbortException {
-        TclList root = parseTcl(input, "Filename");
-        QuestaUCDBResult mergeResult = new QuestaUCDBResult(coverageID);
+			}
 
-        // First-level elements should contribute to the mergefile itself 
-        for (TclToken child : root.getChildren()) {
-            constructCoverageResults(mergeResult, mergeResult, child);
-        }
-        return mergeResult;
-    }
+		}
+	}
 
-    private static void constructCoverageResults(QuestaUCDBResult mergeResult, QuestaCoverageResult coverage, TclToken current) {
-        // leaf level of vcover stats correspond to coverage values
-        if (!(current instanceof TclList)) {
-            String[] key_value = current.toString().split(" ");
-            if (key_value.length == 2) {
-                try {
-                    CoverageTypes type = CoverageTypes.valueOf(key_value[0]);
-                    switch (type) {
-                        case TestplanCoverage:
-                            coverage.setTestplanCov(key_value[1]);
-                            break;
-                        case TotalCoverage:
-                            coverage.setTotalCoverage(key_value[1]);
-                            break;
-                        default:
-                            coverage.add(type.getDisplayName(), key_value[1]);
+	static QuestaUCDBResult parseCoverage(String coverageID, String vcoveroutput) throws AbortException {
+		TclList root = parseTcl(vcoveroutput, "Filename");
+		QuestaUCDBResult mergeResult = new QuestaUCDBResult(coverageID);
 
-                    }
-                } catch (Exception e) {
+		// First-level elements should contribute to the mergefile itself
+		LinkedList<TclToken> children = root.getChildren();
+		while (!children.isEmpty()) {
+			TclToken child = children.remove(0); /* removing children after processing to save memory */
+			constructCoverageResults(mergeResult, mergeResult, child);
+		}
+		return mergeResult;
+	}
 
-                }
+	private static void constructCoverageResults(QuestaUCDBResult mergeResult, QuestaCoverageResult coverage,
+			TclToken current) {
+		// leaf level of vcover stats correspond to coverage values
+		if (!(current instanceof TclList)) {
+			String[] key_value = current.toString().split(" ");
+			if (key_value.length == 2) {
+				try {
+					CoverageTypes type = CoverageTypes.valueOf(key_value[0]);
+					switch (type) {
+					case TestplanCoverage:
+						coverage.setTestplanCov(key_value[1]);
+						break;
+					case TotalCoverage:
+						coverage.setTotalCoverage(key_value[1]);
+						break;
+					default:
+						coverage.add(type.getDisplayName(), key_value[1]);
 
-            }
-            return;
-        }
+					}
+				} catch (Exception e) {
 
-        TclList currentList = (TclList) current;
-        // A pair corresponds to an attribute
-        if (current.size() == 2 && currentList.areLeafChildren()) {
-            coverage.addAttributes(currentList.getChildren().getFirst().toString(), currentList.getChildren().getLast().toString());
-        } else {
+				}
 
-            QuestaCoverageResult result = new QuestaCoverageResult();
+			}
+			return;
+		}
 
-            // recursively process all children
-            for (TclToken child : currentList.getChildren()) {
-                constructCoverageResults(mergeResult, result, child);
-            }
+		TclList currentList = (TclList) current;
+		// A pair corresponds to an attribute
+		if (current.size() == 2 && currentList.areLeafChildren()) {
+			coverage.addAttributes(currentList.getChildren().getFirst().toString(),
+					currentList.getChildren().getLast().toString());
+		} else {
 
-            if (result.isTest()) {
-                // filter out history records
-                if (!result.getCoverageId().endsWith(mergeResult.getCoverageId())) {
-                    mergeResult.addTest(result);
-                }
-            } else {
-                // flatten non-test scopes (USERATTR|CHILDREN...)
-                for (Map.Entry<String, String> attrEntry : result.attributesValues.entrySet()) {
-                    coverage.addAttributes(attrEntry.getKey(), attrEntry.getValue());
-                }
-            }
-        }
-    }
+			QuestaCoverageResult result = new QuestaCoverageResult();
 
-    /**
-     * returns the parsed tcl list.
-     *
-     * @param line
-     * @return
-     */
-    private static TclList genericParse(String line) throws AbortException {
-    	Map<String, TclToken> leafTokens = new HashMap<>();
-        TclList root = new TclList();
-        TclList temp;
-        TclList current = root;
-        line = line.trim();
-        if (line.isEmpty() || line.charAt(0) != '{') {
-            throw new AbortException("Expected tcl list not found");
-        }
-        // start from the next character
-        for (int i = 0; i < line.length(); i++) {
-            switch (line.charAt(i)) {
-                case '{':
-                    temp = new TclList();
-                    temp.parent = (TclList) current;
-                    current = temp;
-                    break;
-                case '}':
-                    if ( current.parent == null) {
-                        throw new AbortException("Poorly formed tcl list");
-                    }
-                    switch (current.size()) {
-                        case 0:
-                            break;
-                        case 1:
-                            // flatten single lists
-                            current.parent.addChild(current.getChildren().getFirst());
-                            break;
-                        default:
-                            current.parent.addChild(current);
-                    }
-                    current = current.parent;
-                    break;
-                case ' ':
-                    break;
-                default:
+			// recursively process all children
+			LinkedList<TclToken> children = currentList.getChildren();
+			while (!children.isEmpty()) {
+				TclToken child = children.remove(0); /* removing children after processing to save memory */
+				constructCoverageResults(mergeResult, result, child);
+			}
 
-                    StringBuilder value = new StringBuilder();
-                    while (i < line.length() && (line.charAt(i) != '}' || line.charAt(i - 1) == '\\') && (line.charAt(i) != '{' || line.charAt(i - 1) == '\\')) {
-                        value.append(line.charAt(i));
-                        i++;
-                    }
-                    i--;
+			if (result.isTest()) {
+				// filter out history records
+				if (!result.getCoverageId().endsWith(mergeResult.getCoverageId())) {
+					mergeResult.addTest(result);
+				}
+			} else {
+				// flatten non-test scopes (USERATTR|CHILDREN...)
+				for (Map.Entry<String, String> attrEntry : result.attributesValues.entrySet()) {
+					coverage.addAttributes(attrEntry.getKey(), attrEntry.getValue());
+				}
+			}
+		}
+	}
 
-                    //add only non-empty values.. 
-                    if (value.toString().trim().length() > 0) {
-                    	TclToken token = null;
-                    	String valueString = value.toString().trim();
-                    	if (!leafTokens.containsKey(valueString)) {
-                    		try {
-								token = new TclToken(valueString.getBytes("ASCII"));
-							} catch (UnsupportedEncodingException e) {
-								// e.printStackTrace();
-							}
-                    		leafTokens.put(valueString, token);
-                    	}
-                    	else {
-                    		token = leafTokens.get(valueString);
-                    	}
-                        current.addChild(token);
-                    }
-            }
-        }
-        if (current != root) {
-            throw new AbortException("Poorly formed tcl list.");
-        }
+	/**
+	 * returns the parsed tcl list.
+	 *
+	 * @param line
+	 * @return
+	 */
+	private static TclList genericParse(String line) throws AbortException {
+		Map<String, TclToken> leafTokens = new HashMap<>();
+		TclList root = new TclList();
+		TclList temp;
+		TclList current = root;
+		line = line.trim();
+		if (line.isEmpty() || line.charAt(0) != '{') {
+			throw new AbortException("Expected tcl list not found");
+		}
+		// start from the next character
+		for (int i = 0; i < line.length(); i++) {
+			switch (line.charAt(i)) {
+			case '{':
+				temp = new TclList();
+				temp.parent = (TclList) current;
+				current = temp;
+				break;
+			case '}':
+				if (current.parent == null) {
+					throw new AbortException("Poorly formed tcl list");
+				}
+				switch (current.size()) {
+				case 0:
+					break;
+				case 1:
+					// flatten single lists
+					current.parent.addChild(current.getChildren().getFirst());
+					break;
+				default:
+					current.parent.addChild(current);
+				}
+				current = current.parent;
+				break;
+			case ' ':
+				break;
+			default:
 
-        // Added check in case of single element, since the first element will
-        // be a token not a list.
-        if (root.getChildren().getFirst() instanceof TclList) {
-        	return (TclList)root.getChildren().getFirst();
-        } else {
-        	return root;
-        }
-    }
+				StringBuilder value = new StringBuilder();
+				while (i < line.length() && (line.charAt(i) != '}' || line.charAt(i - 1) == '\\')
+						&& (line.charAt(i) != '{' || line.charAt(i - 1) == '\\')) {
+					value.append(line.charAt(i));
+					i++;
+				}
+				i--;
 
-    private static class TclList extends TclToken {
-        private LinkedList<TclToken> children;
-        TclList parent;
+				// add only non-empty values..
+				if (value.toString().trim().length() > 0) {
+					TclToken token = null;
+					String valueString = value.toString().trim();
+					if (!leafTokens.containsKey(valueString)) {
+						try {
+							token = new TclToken(valueString.getBytes("ASCII"));
+						} catch (UnsupportedEncodingException e) {
+							// TODO should log an error here
+						}
+						leafTokens.put(valueString, token);
+					} else {
+						token = leafTokens.get(valueString);
+					}
+					current.addChild(token);
+				}
+			}
+		}
+		if (current != root) {
+			throw new AbortException("Poorly formed tcl list.");
+		}
 
-        public TclList() {
-            super(null);
-            children = new LinkedList<>();
+		if (root.getChildren().getFirst() instanceof TclList) {
+			return (TclList) root.getChildren().getFirst();
+		} 
+		return root;
+	}
 
-        }
+	private static class TclList extends TclToken {
+		private LinkedList<TclToken> children;
+		TclList parent;
 
-        @Override
-        public int size() {
-            return children.size();
-        }
+		public TclList() {
+			super(null);
+			children = new LinkedList<>();
 
-        public LinkedList<TclToken> getChildren() {
-            return children;
-        }
+		}
 
-        public void addChild(TclToken x) {
-            children.add(x);
-        }
+		@Override
+		public int size() {
+			return children.size();
+		}
 
-        public boolean areLeafChildren() {
+		public LinkedList<TclToken> getChildren() {
+			return children;
+		}
 
-            for (TclToken child : children) {
-                if ((child instanceof TclList)) {
-                    return false;
-                }
-            }
-            return true;
+		public void addChild(TclToken x) {
+			children.add(x);
+		}
 
-        }
+		public boolean areLeafChildren() {
 
-    }
+			for (TclToken child : children) {
+				if ((child instanceof TclList)) {
+					return false;
+				}
+			}
+			return true;
 
-    private static class TclToken {
-        private final byte[] value;
+		}
 
-        public TclToken(byte[] value) {
-            this.value = value;
-        }
+	}
 
-        public int size() {
-            return 1;
-        }
+	private static class TclToken {
+		private final byte[] value;
 
-        @Override
-        public String toString() {
-        	try {
+		public TclToken(byte[] value) {
+			this.value = value;
+		}
+
+		public int size() {
+			return 1;
+		}
+
+		@Override
+		public String toString() {
+			try {
 				return new String(value, "ASCII");
 			} catch (UnsupportedEncodingException e) {
 				// e.printStackTrace();
 			}
-            return null;
-        }
+			return "";
+		}
 
-    }
+	}
 
-    private enum CoverageTypes {
+	private enum CoverageTypes {
 
-        Covergroups("Covergroups"),
-        CoverDirectives("Directives"),
-        Statements("Statements"),
-        Branches("Branches"),
-        UdpExpressions("UDP Expressions"),
-        UdpConditions("UDP Conditions"),
-        ToggleNodes("Toggles"),
-        States("FSMs States"),
-        Transitions("FSMs Transitions"),
-        FecExpressions("FEC Expressions"),
-        FecConditions("FEC Conditions"),
-        AssertSuccesses("Assertions"),
-        TestplanCoverage,
-        TotalCoverage;
+		Covergroups("Covergroups"), CoverDirectives("Directives"), Statements("Statements"), Branches(
+				"Branches"), UdpExpressions("UDP Expressions"), UdpConditions("UDP Conditions"), ToggleNodes(
+						"Toggles"), States("FSMs States"), Transitions("FSMs Transitions"), FecExpressions(
+								"FEC Expressions"), FecConditions("FEC Conditions"), AssertSuccesses(
+										"Assertions"), TestplanCoverage, TotalCoverage;
 
-        private String displayName;
+		private String displayName;
 
-        private CoverageTypes() {
-        }
+		private CoverageTypes() {
+		}
 
-        private CoverageTypes(String displayName) {
-            this.displayName = displayName;
-        }
+		private CoverageTypes(String displayName) {
+			this.displayName = displayName;
+		}
 
-        public String getDisplayName() {
-            return displayName;
-        }
+		public String getDisplayName() {
+			return displayName;
+		}
 
-    };
+	};
 
 }
-

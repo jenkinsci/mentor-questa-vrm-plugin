@@ -25,10 +25,15 @@ package com.mentor.questa.jenkins;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Functions;
+import hudson.model.Job;
+import hudson.model.JobProperty;
+import hudson.model.JobPropertyDescriptor;
 import hudson.util.Area;
 import hudson.util.TextFile;
 import java.io.File;
 import java.io.IOException;
+import java.util.Map;
+
 import org.apache.commons.io.FileUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.types.FileSet;
@@ -157,5 +162,15 @@ public class Util {
         }
         return fileName.substring(startIndex, endIndex);
 
+    }
+    
+    public static GraphsByBuildDates getGraphXAxisDisplay(Job job) {
+    	Map<JobPropertyDescriptor, JobProperty> jobProperties = job.getProperties();
+    	for (Map.Entry<JobPropertyDescriptor, JobProperty> entry : jobProperties.entrySet()) {
+    		if (entry.getValue() instanceof GraphsByBuildDates) {
+    			return (GraphsByBuildDates) entry.getValue();
+    		}
+    	}
+    	return null;
     }
 }

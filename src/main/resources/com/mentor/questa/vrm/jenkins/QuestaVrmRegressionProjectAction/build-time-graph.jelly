@@ -24,13 +24,19 @@ THE SOFTWARE.
 -->
 
 <?jelly escape-by-default='true'?>
-<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt" xmlns:local="local">
-    <j:set var="url" value="${from.urlName}/../buildTimeGraph"/>        
-    <j:set var="width" value="${from.calcDefaultSize().width}"/>        
-    <j:set var="height" value="${from.calcDefaultSize().height}"/>        
-    <j:set var="query" value="width=${width}&amp;height=${height}"/>
-    <j:set var="history" value="${history}"/>
-    <j:if test="${from.job.builds.size()&gt; 1}">        
-    	<st:include from="${from}" it="${from}" page="build-time-graph.jelly" />
-    </j:if>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form" xmlns:i="jelly:fmt">
+    <j:set var="url" value="${from.getUrlName()}"/>
+    <j:set var="rangeParameters" value="width=500&amp;height=200"/>
+    
+    <div class="test-trend-caption">
+    	    Build Time Trend
+    	</div>
+       <div align="center">
+           <img src="${url}/buildTimeGraph/buildTimeGraph?${rangeParameters}" lazymap="${url}/../buildTimeGraph/map?${rangeParameters}" alt="[Build time graph]"/>
+       </div>
+       <div style="text-align:right">
+        <a href="questavrmprojectaction/?width=800&amp;height=600">enlarge</a>
+    </div>
+   
+    
 </j:jelly>

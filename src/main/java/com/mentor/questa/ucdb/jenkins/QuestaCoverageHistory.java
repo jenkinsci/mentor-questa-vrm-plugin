@@ -52,6 +52,8 @@ import org.jfree.ui.RectangleInsets;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 
+import com.mentor.questa.jenkins.ChartLabel;
+
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import hudson.Functions;
 import hudson.tasks.test.TestObject;
@@ -211,7 +213,7 @@ public class QuestaCoverageHistory extends QuestaHistory {
         new CoverageGraphImpl("Coverage %", area.width, area.height, null).doPng(req, rsp);
 
     }
-
+    
     abstract class AbstractCoverageGraphImpl extends GraphImpl {
 
         final List<String> metrics;

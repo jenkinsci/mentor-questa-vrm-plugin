@@ -42,76 +42,78 @@ import org.apache.tools.ant.types.FileSet;
  *
  *
  */
-public class QuestaVrmJunitProcessor  implements Serializable {
-   
-    public void perform(Run build, FilePath workspace, TaskListener listener, PrintStream logger) throws IOException, InterruptedException{
-        recordTestResult(build,workspace, listener, logger);
-    }
-    private TestResult recordTestResult(Run build, FilePath workspace, TaskListener listener, PrintStream logger) throws IOException, InterruptedException {
-        TestResultAction existingAction = build.getAction(TestResultAction.class);
-        final long buildTime = build.getTimestamp().getTimeInMillis();
-        final long nowMaster = System.currentTimeMillis();
+public class QuestaVrmJunitProcessor implements Serializable {
 
-        TestResult existingTestResults = null;
+	public void perform(Run build, FilePath workspace, TaskListener listener, PrintStream logger)
+			throws IOException, InterruptedException {
+		recordTestResult(build, workspace, listener, logger);
+	}
 
-        if (existingAction != null) {
-            existingTestResults = existingAction.getResult();
-        }
+	private TestResult recordTestResult(Run build, FilePath workspace, TaskListener listener, PrintStream logger)
+			throws IOException, InterruptedException {
+		TestResultAction existingAction = build.getAction(TestResultAction.class);
+		final long buildTime = build.getTimestamp().getTimeInMillis();
+		final long nowMaster = System.currentTimeMillis();
 
-        TestResult result = getTestResult(workspace, "vm-jUnit.xml", existingTestResults, buildTime, nowMaster);
-        if (result != null) {
-            TestResultAction action;
-            if (existingAction == null) {
-                action = new TestResultAction(build, result, listener);
-            } else {
-                action = existingAction;
-                action.setResult(result, listener);
-            }
+		TestResult existingTestResults = null;
 
-            if (result.getPassCount() == 0 && result.getFailCount() == 0) {
-                logger.println("All test reports are empty.");
-            }
+		if (existingAction != null) {
+			existingTestResults = existingAction.getResult();
+		}
 
-            if (existingAction == null) {
-                build.getActions().add(action);
-            }
-        }
-        return result;
-    }
+		TestResult result = getTestResult(workspace, "vm-jUnit.xml", existingTestResults, buildTime, nowMaster);
+		if (result != null) {
+			TestResultAction action;
+			if (existingAction == null) {
+				/* Adding this action to override the graph implementation (X-axis dates) */
+				action = new QuestaVrmTestResultAction(build, result, listener);
+			} else {
+				action = existingAction;
+				action.setResult(result, listener);
+			}
 
-    private TestResult getTestResult(final FilePath workspace,
-            final String junitFilePattern,
-            final TestResult existingTestResults,
-            final long buildTime, final long nowMaster)
-            throws IOException, InterruptedException {
+			if (result.getPassCount() == 0 && result.getFailCount() == 0) {
+				logger.println("All test reports are empty.");
+			}
 
-        return workspace.act(new jenkins.SlaveToMasterFileCallable<TestResult>() {
-            @Override
-            public TestResult invoke(File ws, VirtualChannel channel) throws IOException {
-                final long nowSlave = System.currentTimeMillis();
-                FileSet fs = Util.createFileSet(ws, junitFilePattern);
-                DirectoryScanner ds = fs.getDirectoryScanner();
-                String[] files = ds.getIncludedFiles();
+			if (existingAction == null) {
+				build.getActions().add(action);
+			}
+		}
+		return result;
+	}
 
-                if (files.length == 0) {
-                    //no equivalent junit results.. 
-                    throw new AbortException("Error parsing temporary junit file. The equivalent junit results are not generated.");
-                }
-                try {
-                    if (existingTestResults == null) {
-                        return new TestResult(buildTime + (nowSlave - nowMaster), ds, true);
-                    } else {
-                        existingTestResults.parse(buildTime + (nowSlave - nowMaster), ds);
-                        return existingTestResults;
-                    }
-                } catch (IOException ioe) {
-                    throw new IOException(ioe);
-                }
-            }
+	private TestResult getTestResult(final FilePath workspace, final String junitFilePattern,
+			final TestResult existingTestResults, final long buildTime, final long nowMaster)
+			throws IOException, InterruptedException {
 
-        });
+		return workspace.act(new jenkins.SlaveToMasterFileCallable<TestResult>() {
+			@Override
+			public TestResult invoke(File ws, VirtualChannel channel) throws IOException {
+				final long nowSlave = System.currentTimeMillis();
+				FileSet fs = Util.createFileSet(ws, junitFilePattern);
+				DirectoryScanner ds = fs.getDirectoryScanner();
+				String[] files = ds.getIncludedFiles();
 
-    }
+				if (files.length == 0) {
+					// no equivalent junit results..
+					throw new AbortException(
+							"Error parsing temporary junit file. The equivalent junit results are not generated.");
+				}
+				try {
+					if (existingTestResults == null) {
+						return new TestResult(buildTime + (nowSlave - nowMaster), ds, true);
+					} else {
+						existingTestResults.parse(buildTime + (nowSlave - nowMaster), ds);
+						return existingTestResults;
+					}
+				} catch (IOException ioe) {
+					throw new IOException(ioe);
+				}
+			}
+
+		});
+
+	}
 
 }
-

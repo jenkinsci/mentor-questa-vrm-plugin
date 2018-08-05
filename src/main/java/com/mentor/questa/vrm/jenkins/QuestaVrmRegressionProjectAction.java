@@ -23,120 +23,133 @@
  */
 package com.mentor.questa.vrm.jenkins;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.StaplerResponse;
+import org.kohsuke.stapler.bind.JavaScriptMethod;
+
+import com.mentor.questa.jenkins.BuildTimeGraph;
 import com.mentor.questa.jenkins.Util;
 import com.mentor.questa.ucdb.jenkins.CoverageUtil;
+
 import hudson.model.Job;
 import hudson.model.ProminentProjectAction;
 import hudson.tasks.junit.TestResult;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.util.Area;
-import java.util.ArrayList;
-import java.util.List;
 import net.sf.json.JSONArray;
-import org.kohsuke.stapler.StaplerRequest;
-import org.kohsuke.stapler.StaplerResponse;
-import org.kohsuke.stapler.bind.JavaScriptMethod;
 
 /**
  *
  * 
  */
-public class QuestaVrmRegressionProjectAction  implements ProminentProjectAction{
-    public final Job job;
-    private transient AbstractTestResultAction currentTestResultAction;
+public class QuestaVrmRegressionProjectAction implements ProminentProjectAction {
+	public final Job job;
 
-    public QuestaVrmRegressionProjectAction(Job job, AbstractTestResultAction testResultAction) {
-        this.job = job;
-        currentTestResultAction = testResultAction;
-    }
-    
-    @Override
-    public String getDisplayName() {
-      return "Questa VRM Project Action";
-    }
+	private transient AbstractTestResultAction currentTestResultAction;
 
-    @Override
-    public String getUrlName() {
-        return "questavrmprojectaction";
-    }
+	private transient BuildTimeGraph buildTimeGraph;
 
-    @Override
-    public String getIconFileName() {
-       return null;
-    }
-    
-    public QuestaVrmRegressionBuildAction getBuildAction(){
-        return job.getLastCompletedBuild().getAction(QuestaVrmRegressionBuildAction.class);
-      
-    }
-       
-    public Area calcDefaultSize() {
-        return Util.getProjectGraphArea();
-    }
-   
-    public Object getDynamic(String name, StaplerRequest req, StaplerResponse rsp) {
-        return job.getDynamic(name, req, rsp);
-    }
-     public List<String> getCoverageColumnHeaders() {
-      
-        return CoverageUtil.getCoverageSummaryHeaders();
-    }
+	public QuestaVrmRegressionProjectAction(Job job, AbstractTestResultAction testResultAction) {
+		this.job = job;
+		currentTestResultAction = testResultAction;
+		buildTimeGraph = new BuildTimeGraph(job);
+	}
 
+	@Override
+	public String getDisplayName() {
+		return "Questa VRM Project Action";
+	}
 
-    public synchronized List<List<CoverageUtil.RowItem>> getRows(int n) {
+	@Override
+	public String getUrlName() {
+		return "questavrmprojectaction";
+	}
 
-        ArrayList<List<CoverageUtil.RowItem>> rows = new ArrayList<>();
-        int i = 0;
-        
-      
-        for (; currentTestResultAction != null && i < n; currentTestResultAction = currentTestResultAction.getPreviousResult(), i++) {
-            if (!(currentTestResultAction.getResult() instanceof TestResult)) {
-                continue;
-            }  
-            ArrayList<CoverageUtil.RowItem> row = new ArrayList<>();
-            CoverageUtil.RowItem build = new CoverageUtil.RowItem(currentTestResultAction.run.getDisplayName());
-            build.url = currentTestResultAction.run.getUrl();
-            build.imgSrc = currentTestResultAction.run.getBuildStatusUrl();
-            row.add(build);
-            row.addAll(CoverageUtil.getCoverageSummaryRow(currentTestResultAction));
-            rows.add(row);
-        }
-        return rows;
-    }
-    
-    public List<List<CoverageUtil.RowItem>> getRows(){
-        return getRows(5);
-    }
-    @JavaScriptMethod
-    public JSONArray getJSONData() {
-        JSONArray result = new JSONArray();
+	@Override
+	public String getIconFileName() {
+		return null;
+	}
 
-        for (List<CoverageUtil.RowItem> row : getRows()) {
-            JSONArray jsonRow = new JSONArray();
-            for (CoverageUtil.RowItem rowItem : row) {
-                jsonRow.add(rowItem.getJSONObject());
-            }
-            result.add(jsonRow);
-        }
-        return result;
+	public QuestaVrmRegressionBuildAction getBuildAction() {
+		return job.getLastCompletedBuild().getAction(QuestaVrmRegressionBuildAction.class);
 
-    }
-    
-    public JSONArray getJSONRow() {
-        JSONArray jsonRow = new JSONArray();
-         List<List<CoverageUtil.RowItem>> rows = getRows(1);
-        if (!rows.isEmpty()){
-            List<CoverageUtil.RowItem> row = rows.get(0); 
-            for (CoverageUtil.RowItem rowItem : row) {
-                 jsonRow.add(rowItem.getJSONObject());
-            }
-        }
-        return jsonRow;
-    }
-    
-    @JavaScriptMethod
-    public boolean hasMore() {
-        return currentTestResultAction!=null;
-    }
-    
+	}
+
+	public BuildTimeGraph getBuildTimeGraph() {
+		return buildTimeGraph;
+	}
+
+	public Area calcDefaultSize() {
+		return Util.getProjectGraphArea();
+	}
+
+	public Object getDynamic(String name, StaplerRequest req, StaplerResponse rsp) {
+		return job.getDynamic(name, req, rsp);
+	}
+
+	public List<String> getCoverageColumnHeaders() {
+
+		return CoverageUtil.getCoverageSummaryHeaders();
+	}
+
+	public synchronized List<List<CoverageUtil.RowItem>> getRows(int n) {
+
+		ArrayList<List<CoverageUtil.RowItem>> rows = new ArrayList<>();
+		int i = 0;
+
+		for (; currentTestResultAction != null
+				&& i < n; currentTestResultAction = currentTestResultAction.getPreviousResult(), i++) {
+			if (!(currentTestResultAction.getResult() instanceof TestResult)) {
+				continue;
+			}
+			ArrayList<CoverageUtil.RowItem> row = new ArrayList<>();
+			CoverageUtil.RowItem build = new CoverageUtil.RowItem(currentTestResultAction.run.getDisplayName());
+			build.url = currentTestResultAction.run.getUrl();
+			build.imgSrc = currentTestResultAction.run.getBuildStatusUrl();
+			row.add(build);
+			row.addAll(CoverageUtil.getCoverageSummaryRow(currentTestResultAction));
+			rows.add(row);
+		}
+		return rows;
+	}
+
+	public List<List<CoverageUtil.RowItem>> getRows() {
+		return getRows(5);
+	}
+
+	@JavaScriptMethod
+	public JSONArray getJSONData() {
+		JSONArray result = new JSONArray();
+
+		for (List<CoverageUtil.RowItem> row : getRows()) {
+			JSONArray jsonRow = new JSONArray();
+			for (CoverageUtil.RowItem rowItem : row) {
+				jsonRow.add(rowItem.getJSONObject());
+			}
+			result.add(jsonRow);
+		}
+		return result;
+
+	}
+
+	public JSONArray getJSONRow() {
+		JSONArray jsonRow = new JSONArray();
+		List<List<CoverageUtil.RowItem>> rows = getRows(1);
+		if (!rows.isEmpty()) {
+			List<CoverageUtil.RowItem> row = rows.get(0);
+			for (CoverageUtil.RowItem rowItem : row) {
+				jsonRow.add(rowItem.getJSONObject());
+			}
+		}
+		return jsonRow;
+	}
+
+	@JavaScriptMethod
+	public boolean hasMore() {
+		return currentTestResultAction != null;
+	}
+
 }

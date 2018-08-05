@@ -23,7 +23,6 @@
  */
 package com.mentor.questa.vrm.jenkins;
 
-;
 import hudson.FilePath;
 import hudson.model.Run;
 import hudson.model.TaskListener;
@@ -32,7 +31,6 @@ import java.io.IOException;
 import java.io.PrintStream;
 import java.io.Serializable;
 import java.util.List;
-
 
 public class QuestaVrmHTMLArchiver implements Serializable {
 

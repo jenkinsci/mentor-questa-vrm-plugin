@@ -1,0 +1,11 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    
+   <f:optionalBlock title="${descriptor.displayName}" name="checked" checked="${instance != null}" inline="true">
+        <f:entry>
+       <f:checkbox name="dateFormatMonth" checked="${instance != null &amp;&amp; instance.dateMonthFormat == true}"/>
+       Format the date as MM/dd
+        </f:entry>
+   </f:optionalBlock> 
+    
+</j:jelly>

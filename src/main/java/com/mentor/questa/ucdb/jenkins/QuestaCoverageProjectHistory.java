@@ -24,6 +24,7 @@
 package com.mentor.questa.ucdb.jenkins;
 
 import com.mentor.questa.jenkins.Util;
+import com.mentor.questa.jenkins.ChartLabel;
 import hudson.Functions;
 
 import hudson.model.Result;
