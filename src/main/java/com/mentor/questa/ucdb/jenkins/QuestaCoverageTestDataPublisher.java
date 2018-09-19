@@ -167,7 +167,7 @@ public class QuestaCoverageTestDataPublisher extends TestDataPublisher {
                         return Collections.singletonList(new QuestaCoverageAction(testResult, cov.getTest(testObject.getName())));
                     }
                 }
-                return Collections.EMPTY_LIST;
+               
             }
 
             ArrayList<QuestaCoverageAction> coverageActions = new ArrayList<>();
