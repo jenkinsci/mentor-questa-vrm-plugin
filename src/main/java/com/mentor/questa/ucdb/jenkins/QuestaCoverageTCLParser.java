@@ -93,7 +93,12 @@ public class QuestaCoverageTCLParser implements Serializable {
 		// get the output of this build
 		logger.println("Trying to locate coverage results \'" + coverageResults + "\' from this run...");
 
-		FilePath[] reports = findReport(coverageResults, workspace);
+		FilePath[] reports = workspace.act(new MasterToSlaveFileCallable<FilePath[]>() {
+                    @Override
+                    public FilePath[] invoke(File f, VirtualChannel channel) throws IOException, InterruptedException {
+                        return findReport(coverageResults, new FilePath(f));
+                    }
+                });
 
 		if (reports == null || reports.length == 0) {
 			logger.println("***[Error]: Could not find any UCDB files."
