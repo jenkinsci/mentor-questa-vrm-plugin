@@ -55,7 +55,13 @@ THE SOFTWARE.
         <f:entry title="Additional vrun options" field="extraArgs">
             <f:textbox default=""/>    
         </f:entry> 
-        
+
+        <f:optionalBlock title="Set 'vcover' executable path" name="enableVcoverExec" checked="${instance.vcoverExec != null}">
+            <f:entry title="Path to Questa 'vcover' executable" field="vcoverExec">
+                <f:textbox default=""/> 
+            </f:entry>
+        </f:optionalBlock>
+
     </f:advanced>
 
 

@@ -79,6 +79,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
     private boolean collectCoverage = true;
 
     private String vrunExec;
+    private String vcoverExec;
     
 
     private String vrmhtmldir;
@@ -96,6 +97,15 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         this.vrmdata = vrmdata;
     }
 
+    public static class OptionalVcoverExecBlock {
+        private final String vcoverExec;
+
+        @org.kohsuke.stapler.DataBoundConstructor
+        public OptionalVcoverExecBlock(String vcoverExec) {
+            this.vcoverExec = vcoverExec;
+        }
+    }
+    
     public Double getHealthScaleFactor() {
         return healthScaleFactor;
     }
@@ -130,7 +140,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         List<TestResultAction.Data> testData = new ArrayList<TestResultAction.Data>();
 
         if (isCollectCoverage()) {
-            QuestaCoverageTestDataPublisher.Data d = (QuestaCoverageTestDataPublisher.Data) QuestaCoverageTestDataPublisher.getRegressionTestData(regressionResult.getMergeFiles(), resolveParametersInString(build, listener, getVrunExec()), regressionResult.getRegressionBegin(), build, workspace, launcher, listener, action.getResult());
+            QuestaCoverageTestDataPublisher.Data d = (QuestaCoverageTestDataPublisher.Data) QuestaCoverageTestDataPublisher.getRegressionTestData(regressionResult.getMergeFiles(), resolveParametersInString(build, listener, getVrunExec()), resolveParametersInString(build, listener, getVcoverExec()), regressionResult.getRegressionBegin(), build, workspace, launcher, listener, action.getResult());
             if (d != null) {
                 testData.add(d);
             }
@@ -313,6 +323,13 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
     public final void setCollectCoverage(boolean collectCoverage) {
         this.collectCoverage = collectCoverage;
     }
+    
+    @DataBoundSetter
+    public final void setEnableVcoverExec(OptionalVcoverExecBlock enableVcoverExec) {
+        this.vcoverExec = (enableVcoverExec != null)? enableVcoverExec.vcoverExec : null;
+    }
+    
+
 
     /**
      * @return the vrunExec
@@ -324,6 +341,16 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         return vrunExec;
     }
 
+    /**
+     * @return the vcoverExec
+     */
+    public String getVcoverExec() {
+        if (vcoverExec == null) {
+            return getDescriptor().getVcoverExec();
+        }
+        return vcoverExec;
+    }
+    
     /**
      * @return the extraArgs
      */
@@ -359,6 +386,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         private String vrunExec;
+        private String vcoverExec;
 
         public DescriptorImpl() {
             load();
@@ -390,6 +418,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         @Override
         public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
             vrunExec = json.get("vrunExec").toString();
+            vcoverExec = json.get("vcoverExec").toString();
             save();
             super.configure(req, json);
             return true;
@@ -401,7 +430,10 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
             }
             return vrunExec;
         }
-
+        
+        public String getVcoverExec() {
+            return vcoverExec;
+        }
         public DescriptorExtensionList<TestDataPublisher, Descriptor<TestDataPublisher>> getTestDataPublishers() {
             DescriptorExtensionList<TestDataPublisher, Descriptor<TestDataPublisher>> originalList = TestDataPublisher.all();
             DescriptorExtensionList<TestDataPublisher, Descriptor<TestDataPublisher>> newList = DescriptorExtensionList.createDescriptorList(Jenkins.getInstance(), TestDataPublisher.class);

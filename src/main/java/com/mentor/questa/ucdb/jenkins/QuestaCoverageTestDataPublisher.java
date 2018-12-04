@@ -118,9 +118,10 @@ public class QuestaCoverageTestDataPublisher extends TestDataPublisher {
 
     }
 
-    public static TestResultAction.Data getRegressionTestData(List<String> mergefiles, String vrunExec, Date regressionBegin, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, TestResult testResult) throws IOException, InterruptedException {
+    public static TestResultAction.Data getRegressionTestData(List<String> mergefiles, String vrunExec, String vcoverExec, Date regressionBegin, Run<?, ?> build, FilePath workspace, Launcher launcher, TaskListener listener, TestResult testResult) throws IOException, InterruptedException {
         HashMap<String, QuestaUCDBResult> coverageResult = new HashMap<>();
-        String vcoverExec = convertVruntoVcover(vrunExec);
+        if (vcoverExec == null || vcoverExec.trim().isEmpty())
+            vcoverExec = convertVruntoVcover(vrunExec);
 
         if (mergefiles != null) {
 

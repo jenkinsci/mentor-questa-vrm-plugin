@@ -49,7 +49,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
-
+import jenkins.MasterToSlaveFileCallable;
 /**
  * Parse Coverage XML Results
  *
@@ -84,7 +84,7 @@ public class QuestaCoverageTCLParser implements Serializable {
 	}
 
 	public HashMap<String, QuestaUCDBResult> parseResult(HashMap<String, QuestaUCDBResult> results,
-			String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher,
+			final String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher,
 			TaskListener listener, Date regressionBegin) throws InterruptedException, IOException {
 		final long buildTime = regressionBegin == null ? run.getTimestamp().getTimeInMillis()
 				: regressionBegin.getTime();
@@ -136,6 +136,8 @@ public class QuestaCoverageTCLParser implements Serializable {
 			Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
 			proc.join();
 			vcoveroutput = outputstream.toString();
+                        // Check if a wrapper was being used instead of the executable.
+                        vcoveroutput = getTclOutput(vcoveroutput);
 			mergeResult = parseCoverage(mergeResult.getCoverageId(), vcoveroutput);
 		} catch (AbortException e) {
 			logger.println("[ERROR]: Error processing UCDB \'" + inputfile + "\', with command \'" + cmd + "\'.");
@@ -154,6 +156,8 @@ public class QuestaCoverageTCLParser implements Serializable {
 			Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
 			proc.join();
 			vcoveroutput = outputstream.toString();
+                        // Check if a wrapper was being used instead of the executable.
+                        vcoveroutput = getTclOutput(vcoveroutput);
 			parseTrendableAttributes(mergeResult.attributesValues, vcoveroutput);
 		} catch (AbortException e) {
 			logger.println("[ERROR]: During processing global attributes of UCDB \'" + inputfile + "\', with command \'"
@@ -172,6 +176,8 @@ public class QuestaCoverageTCLParser implements Serializable {
 			Proc proc = launchQuiet(workspace, launcher, env, outputstream, cmd);
 			proc.join();
 			vcoveroutput = outputstream.toString();
+                        // Check if a wrapper was being used instead of the executable.
+                        vcoveroutput = getTclOutput(vcoveroutput);
 			HashMap<String, String> attributes = new HashMap<>();
 			parseTrendableAttributes(attributes, vcoveroutput);
 			for (Map.Entry<String, String> attrEntry : attributes.entrySet()) {
@@ -442,6 +448,22 @@ public class QuestaCoverageTCLParser implements Serializable {
 		} 
 		return root;
 	}
+
+        /**
+	 * Checks if vcoverOutput is from a script or wrapper not directly from
+         * running the executable.
+	 *
+	 * @param vcoverOutput
+	 * @return String
+	 */
+        private String getTclOutput(String vcoverOutput) {
+            int vcoverStart;
+            vcoverStart = vcoverOutput.indexOf('{');
+            if ((vcoverStart+1) >= 0 && (vcoverStart+1) < vcoverOutput.length() && (vcoverOutput.charAt(vcoverStart+1) == '{' || vcoverOutput.charAt(vcoverStart+1) == '}'))
+               return vcoverOutput.substring(vcoverStart);
+            return vcoverOutput;
+
+        }
 
 	private static class TclList extends TclToken {
 		private LinkedList<TclToken> children;
