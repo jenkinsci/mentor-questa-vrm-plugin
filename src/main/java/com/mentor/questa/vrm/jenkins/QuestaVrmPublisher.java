@@ -345,9 +345,6 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
      * @return the vcoverExec
      */
     public String getVcoverExec() {
-        if (vcoverExec == null) {
-            return getDescriptor().getVcoverExec();
-        }
         return vcoverExec;
     }
     
@@ -386,7 +383,6 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
     public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
 
         private String vrunExec;
-        private String vcoverExec;
 
         public DescriptorImpl() {
             load();
@@ -418,7 +414,6 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         @Override
         public boolean configure(StaplerRequest req, JSONObject json) throws FormException {
             vrunExec = json.get("vrunExec").toString();
-            vcoverExec = json.get("vcoverExec").toString();
             save();
             super.configure(req, json);
             return true;
@@ -431,9 +426,6 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
             return vrunExec;
         }
         
-        public String getVcoverExec() {
-            return vcoverExec;
-        }
         public DescriptorExtensionList<TestDataPublisher, Descriptor<TestDataPublisher>> getTestDataPublishers() {
             DescriptorExtensionList<TestDataPublisher, Descriptor<TestDataPublisher>> originalList = TestDataPublisher.all();
             DescriptorExtensionList<TestDataPublisher, Descriptor<TestDataPublisher>> newList = DescriptorExtensionList.createDescriptorList(Jenkins.getInstance(), TestDataPublisher.class);
