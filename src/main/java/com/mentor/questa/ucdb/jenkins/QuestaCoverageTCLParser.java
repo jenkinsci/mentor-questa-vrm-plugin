@@ -133,7 +133,7 @@ public class QuestaCoverageTCLParser implements Serializable {
 		ByteArrayOutputStream outputstream = new ByteArrayOutputStream();
                 
                 String coverageID = inputfile;
-                if ((vrmData != null && inputfile.startsWith(vrmData)) || inputfile.replaceAll("\\\\", "/").startsWith(vrmData)) {
+                if (vrmData != null && (inputfile.startsWith(vrmData) || inputfile.replaceAll("\\\\", "/").startsWith(vrmData))) {
 			coverageID = inputfile.substring(vrmData.length() + 1);
 		}
                 
