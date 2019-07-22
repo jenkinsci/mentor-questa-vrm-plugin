@@ -74,18 +74,18 @@ public class QuestaCoverageTCLParser implements Serializable {
 	public HashMap<String, QuestaUCDBResult> parseResult(String coverageResults, String vcoverExec, Run<?, ?> run,
 			FilePath workspace, Launcher launcher, TaskListener listener) throws InterruptedException, IOException {
 		return parseResult(new HashMap<String, QuestaUCDBResult>(), coverageResults, vcoverExec, run, workspace,
-				launcher, listener, null);
+				launcher, listener, null, null);
 	}
 
 	public HashMap<String, QuestaUCDBResult> parseResult(HashMap<String, QuestaUCDBResult> results,
 			String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher,
 			TaskListener listener) throws InterruptedException, IOException {
-		return parseResult(results, coverageResults, vcoverExec, run, workspace, launcher, listener, null);
+		return parseResult(results, coverageResults, vcoverExec, run, workspace, launcher, listener, null, null);
 	}
 
 	public HashMap<String, QuestaUCDBResult> parseResult(HashMap<String, QuestaUCDBResult> results,
 			final String coverageResults, String vcoverExec, Run<?, ?> run, FilePath workspace, Launcher launcher,
-			TaskListener listener, Date regressionBegin) throws InterruptedException, IOException {
+			TaskListener listener, Date regressionBegin, String vrmData) throws InterruptedException, IOException {
 		final long buildTime = regressionBegin == null ? run.getTimestamp().getTimeInMillis()
 				: regressionBegin.getTime();
 		PrintStream logger = listener.getLogger();
@@ -117,7 +117,7 @@ public class QuestaCoverageTCLParser implements Serializable {
 
 		for (FilePath report : recentReports) {
 			QuestaUCDBResult mergeResult = parseResultFromFile(report.getRemote(), vcoverExec, workspace, launcher,
-					run.getEnvironment(listener), logger);
+					vrmData, run.getEnvironment(listener), logger);
 			results.put(mergeResult.getCoverageId(), mergeResult);
 		}
 
@@ -126,13 +126,18 @@ public class QuestaCoverageTCLParser implements Serializable {
 
 	@SuppressFBWarnings(value = "DM_DEFAULT_ENCODING", justification = "Expected behavior")
 	private QuestaUCDBResult parseResultFromFile(String inputfile, String vcoverExec, FilePath workspace,
-			Launcher launcher, Map<String, String> env, PrintStream logger)
+			Launcher launcher, String vrmData, Map<String, String> env, PrintStream logger)
 			throws FileNotFoundException, IOException, InterruptedException {
 
 		logger.println("Processing coverage results from: " + inputfile);
 		ByteArrayOutputStream outputstream = new ByteArrayOutputStream();
-
-		QuestaUCDBResult mergeResult = new QuestaUCDBResult(getRelativePath(workspace, inputfile));
+                
+                String coverageID = inputfile;
+                if ((vrmData != null && inputfile.startsWith(vrmData)) || inputfile.replaceAll("\\\\", "/").startsWith(vrmData)) {
+			coverageID = inputfile.substring(vrmData.length() + 1);
+		}
+                
+		QuestaUCDBResult mergeResult = new QuestaUCDBResult(coverageID);
 
 		// Processing vcover stats output
 		String cmd = vcoverExec + " stats -stats=none -prec 4 -tcl " + inputfile;

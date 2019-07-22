@@ -140,7 +140,7 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
         List<TestResultAction.Data> testData = new ArrayList<TestResultAction.Data>();
 
         if (isCollectCoverage()) {
-            QuestaCoverageTestDataPublisher.Data d = (QuestaCoverageTestDataPublisher.Data) QuestaCoverageTestDataPublisher.getRegressionTestData(regressionResult.getMergeFiles(), resolveParametersInString(build, listener, getVrunExec()), resolveParametersInString(build, listener, getVcoverExec()), regressionResult.getRegressionBegin(), build, workspace, launcher, listener, action.getResult());
+            QuestaCoverageTestDataPublisher.Data d = (QuestaCoverageTestDataPublisher.Data) QuestaCoverageTestDataPublisher.getRegressionTestData(regressionResult.getMergeFiles(), resolveParametersInString(build, listener, getVrunExec()), resolveParametersInString(build, listener, getVcoverExec()), regressionResult.getRegressionBegin(), build, workspace, launcher, listener, action.getResult(), regressionResult.getVrmdata());
             if (d != null) {
                 testData.add(d);
             }
@@ -215,7 +215,9 @@ public class QuestaVrmPublisher extends Recorder implements SimpleBuildStep {
             QuestaVrmRegressionResult regressionResult;
             
             try {
-                regressionResult = (QuestaVrmRegressionResult) new QuestaVrmResultsParser().parseResult(getVrmdata(), build, workspace,  launcher, listener);
+                String vrmData = getVrmdata();
+                vrmData = build.getEnvironment(listener).expand(vrmData);
+                regressionResult = (QuestaVrmRegressionResult) new QuestaVrmResultsParser().parseResult(vrmData, build, workspace,  launcher, listener);
             } catch (AbortException a) {
                 listener.getLogger().println("[ERROR]:"+a.getMessage() +" Please recheck your configuration. Aborting storing VRM results.");
                 listener.getLogger().println("Output of vrun command \'" + cmd + "\':\n"+vrunOutput.toString());
