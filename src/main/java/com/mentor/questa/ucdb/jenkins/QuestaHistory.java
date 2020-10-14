@@ -23,10 +23,12 @@
  */
 package com.mentor.questa.ucdb.jenkins;
 
-import java.awt.Color;
-import java.awt.Paint;
-import java.util.List;
-
+import com.mentor.questa.jenkins.ChartLabel;
+import hudson.model.Run;
+import hudson.tasks.test.TestObject;
+import hudson.tasks.test.TestResult;
+import hudson.util.*;
+import jenkins.model.Jenkins;
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
 import org.jfree.chart.axis.CategoryAxis;
@@ -39,18 +41,10 @@ import org.jfree.data.category.CategoryDataset;
 import org.jfree.ui.RectangleInsets;
 import org.kohsuke.stapler.Stapler;
 
-import com.mentor.questa.jenkins.ChartLabel;
-
-import hudson.tasks.test.TestObject;
-import hudson.tasks.test.TestResult;
-import hudson.util.Area;
-import hudson.util.ChartUtil;
-import hudson.util.ColorPalette;
-import hudson.util.DataSetBuilder;
-import hudson.util.Graph;
-import hudson.util.ShiftedCategoryAxis;
-import hudson.util.StackedAreaRenderer2;
-import jenkins.model.Jenkins;
+import java.awt.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 
 /**
@@ -122,17 +116,15 @@ public  class QuestaHistory extends hudson.tasks.junit.History {
     public boolean hasOlder() {
         return getEnd() < getTestObject().getRun().getParent().getBuilds().size();
     }
-    
-    @Override
+
     public List<TestResult> getList() {
         List<TestResult> list;
         try {
-
-            list =  getList(
+            list = getList(
                     getStart(),
                     getEnd());
         } catch (NumberFormatException e) {
-            list = super.getList();
+            list = getList(0, getTestObject().getRun().getParent().getBuilds().size());
         }
 
         return list;
@@ -228,4 +220,21 @@ public  class QuestaHistory extends hudson.tasks.junit.History {
         }
     }
 
+    public List<TestResult> getList(int start, int end) {
+        List<TestResult> list = new ArrayList<>();
+        end = Math.min(end, getTestObject().getRun().getParent().getBuilds().size());
+        Iterator i$ = getTestObject().getRun().getParent().getBuilds().subList(start, end).iterator();
+
+        while(i$.hasNext()) {
+            Run<?, ?> b = (Run)i$.next();
+            if (!b.isBuilding()) {
+                TestResult o = getTestObject().getResultInRun(b);
+                if (o != null) {
+                    list.add(o);
+                }
+            }
+        }
+
+        return list;
+    }
 }

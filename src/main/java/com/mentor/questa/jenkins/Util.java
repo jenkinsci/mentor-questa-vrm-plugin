@@ -34,6 +34,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
+import jenkins.model.Jenkins;
 import org.apache.commons.io.FileUtils;
 import org.apache.tools.ant.DirectoryScanner;
 import org.apache.tools.ant.types.FileSet;
@@ -52,7 +53,7 @@ public class Util {
      * @param workspace the directory that contains the file
      * @param filename input filename 
      * @return the possibly trimmed file contents 
-     * @throws IOException 
+     * @throws IOException
      */
     
     public static String possiblyTrimStdio(boolean keepLongStdio, File workspace, String filename) throws IOException {
@@ -172,5 +173,14 @@ public class Util {
     		}
     	}
     	return null;
+    }
+
+    public static Jenkins getActiveInstance() {
+        Jenkins instance = Jenkins.getInstance();
+        if (instance == null) {
+            throw new IllegalStateException("Jenkins has not been started, or was already shut down");
+        } else {
+            return instance;
+        }
     }
 }

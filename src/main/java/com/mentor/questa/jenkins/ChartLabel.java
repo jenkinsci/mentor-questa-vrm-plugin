@@ -1,16 +1,15 @@
 package com.mentor.questa.jenkins;
 
-import java.awt.Color;
-import java.text.SimpleDateFormat;
-
 import hudson.model.AbstractBuild;
 import hudson.model.Action;
 import hudson.model.Build;
 import hudson.model.Run;
-import hudson.tasks.junit.Helper;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.TestResult;
 import jenkins.model.Jenkins;
+
+import java.awt.*;
+import java.text.SimpleDateFormat;
 
 /*
  * The ChartLabel class is used to represent the X-axis data of the different trend charts
@@ -60,11 +59,9 @@ public class ChartLabel implements Comparable<ChartLabel> {
         Run<?, ?> build = o.getRun();
         String buildLink = build.getUrl();
         this.url= "";
-        Jenkins inst = Helper.getActiveInstance();
-        if (inst!=null ){
-            this.url = inst.getRootUrlFromRequest() ;
-        }
-        this.url+= buildLink + getActionUrl() + o.getUrl();
+        Jenkins inst = Util.getActiveInstance();
+        this.url = inst.getRootUrlFromRequest() ;
+        this.url += buildLink + getActionUrl() + o.getUrl();
     }
     
     @Override

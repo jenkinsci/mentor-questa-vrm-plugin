@@ -23,6 +23,10 @@
  */
 package com.mentor.questa.vrm.jenkins;
 
+import com.mentor.questa.jenkins.Util;
+import com.mentor.questa.ucdb.jenkins.CoverageUtil;
+import com.mentor.questa.ucdb.jenkins.QuestaCoverageResult;
+import com.mentor.questa.ucdb.jenkins.QuestaUCDBResult;
 import hudson.Functions;
 import hudson.model.Api;
 import hudson.model.Item;
@@ -32,30 +36,17 @@ import hudson.tasks.junit.SuiteResult;
 import hudson.tasks.test.MetaTabulatedResult;
 import hudson.tasks.test.TestObject;
 import hudson.tasks.test.TestResult;
-import java.io.File;
-import java.io.IOException;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import jenkins.model.Jenkins;
 import org.apache.commons.lang.StringEscapeUtils;
-import com.mentor.questa.jenkins.Util;
-import com.mentor.questa.ucdb.jenkins.CoverageUtil;
-import com.mentor.questa.ucdb.jenkins.QuestaCoverageResult;
-import com.mentor.questa.ucdb.jenkins.QuestaUCDBResult;
-import hudson.tasks.junit.Helper;
-
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
 import org.kohsuke.stapler.export.Exported;
+
+import java.io.File;
+import java.io.IOException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 /**
  *
@@ -336,11 +327,9 @@ public class QuestaVrmRegressionResult extends MetaTabulatedResult {
                 buf.insert(0, Functions.getRelativeLinkTo(myBuildAsItem));
             } else {
                 // We're not in a stapler request. Okay, give up.
-                String hudsonRootUrl = Helper.getActiveInstance().getRootUrl();
+                String hudsonRootUrl = Util.getActiveInstance().getRootUrl();
                 if (hudsonRootUrl == null || hudsonRootUrl.length() == 0) {
-
                     return "";
-
                 }
                 buf.insert(0, '/');
                 buf.insert(0, hudsonRootUrl);

@@ -23,27 +23,27 @@
  */
 package com.mentor.questa.vrm.jenkins;
 
+import com.mentor.questa.jenkins.Util;
 import hudson.Functions;
 import hudson.model.Api;
 import hudson.model.Item;
 import hudson.model.Run;
 import hudson.tasks.junit.CaseResult;
-import hudson.tasks.junit.Helper;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.TestObject;
 import hudson.tasks.test.TestResult;
+import org.kohsuke.stapler.Stapler;
+import org.kohsuke.stapler.StaplerRequest;
+import org.kohsuke.stapler.export.Exported;
+import org.kohsuke.stapler.export.ExportedBean;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Date;
 
-import org.kohsuke.stapler.export.Exported;
-import org.kohsuke.stapler.export.ExportedBean;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
-import java.util.Date;
-import jenkins.model.Jenkins;
-import org.kohsuke.stapler.Stapler;
-import org.kohsuke.stapler.StaplerRequest;
 
 /**
  * This abstract class represents the information 
@@ -515,7 +515,7 @@ public abstract class QuestaVrmAbstractResult extends TestResult {
                 buf.insert(0, Functions.getRelativeLinkTo(myBuildAsItem));
             } else {
                 
-                String hudsonRootUrl = Helper.getActiveInstance().getRootUrl();
+                String hudsonRootUrl = Util.getActiveInstance().getRootUrl();
                 if (hudsonRootUrl == null || hudsonRootUrl.length() == 0) {
                     return "";
 
