@@ -25,6 +25,7 @@ package com.mentor.questa.ucdb.jenkins;
 
 import com.mentor.questa.jenkins.Util;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import hudson.model.AbstractBuild;
 import hudson.tasks.junit.TestAction;
 import hudson.tasks.test.AbstractTestResultAction;
 import hudson.tasks.test.MetaTabulatedResult;
@@ -167,7 +168,14 @@ public class QuestaCoverageAction extends TestAction {
      */
     @SuppressFBWarnings(value ="NP_NULL_ON_SOME_PATH_FROM_RETURN_VALUE",justification = "Null value not possible"  )
     protected boolean newGraphNotNeeded(StaplerRequest req, StaplerResponse rsp) {
-        Calendar t = buildAction.owner.getProject().getLastBuild().getTimestamp();
+        if (buildAction.owner == null) {
+            return false;
+        }
+
+        AbstractBuild lastBuild = buildAction.owner.getProject().getLastBuild();
+        if (lastBuild == null)
+            return false;
+        Calendar t = lastBuild.getTimestamp();
         return req.checkIfModified(t, rsp);
     }
 
