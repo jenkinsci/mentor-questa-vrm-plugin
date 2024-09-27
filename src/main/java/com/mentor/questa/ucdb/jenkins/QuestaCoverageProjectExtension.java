@@ -48,8 +48,11 @@ public class QuestaCoverageProjectExtension extends TransientActionFactory<Job> 
 
     @Override
     public Collection<? extends Action> createFor(Job job) {
-        Run lastBuild = job.getLastSuccessfulBuild();
         ArrayList<Action> actions = new ArrayList<Action>();
+        if (job == null) {
+            return actions;
+        }
+        Run lastBuild = job.getLastSuccessfulBuild();
         if (lastBuild == null) {
             return actions;
         }
@@ -57,7 +60,10 @@ public class QuestaCoverageProjectExtension extends TransientActionFactory<Job> 
         final List<AbstractTestResultAction> buildActions = lastBuild
                 .getActions(AbstractTestResultAction.class);
         for (AbstractTestResultAction buildAction : buildActions) {
-            List<QuestaCoverageResult> coverageResults= CoverageUtil.getCoverageResult(buildAction);
+            List<QuestaCoverageResult> coverageResults = CoverageUtil.getCoverageResult(buildAction);
+            if (coverageResults == null) {
+                continue;
+            }
             int index = (coverageResults.size() == 1) ? 0 : 1;
             for (QuestaCoverageResult coverageResult : coverageResults) {
                 actions.add(new QuestaCoverageProjectAction(buildAction, coverageResult, index++));
