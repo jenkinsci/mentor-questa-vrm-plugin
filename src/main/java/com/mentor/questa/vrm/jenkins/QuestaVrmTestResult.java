@@ -29,7 +29,6 @@ import hudson.tasks.test.TestResult;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
-import org.apache.commons.lang.StringEscapeUtils;
 import com.mentor.questa.jenkins.Util;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -122,21 +121,21 @@ public class QuestaVrmTestResult extends QuestaVrmAbstractResult {
         StringBuilder sb = new StringBuilder("<testcase classname=\"");
         sb.append(getClassName());
         sb.append("\" name=\"");
-        sb.append(StringEscapeUtils.escapeXml(getTestname()));
+        sb.append(hudson.Util.xmlEscape(getTestname()));
         sb.append("\" time=\"");
         sb.append(getDuration());
         sb.append("\">");
         if (isFailed()) {
             sb.append(System.getProperty("line.separator"));
             sb.append("<failure message=\"");
-            sb.append(StringEscapeUtils.escapeXml(getReason()));
+            sb.append(hudson.Util.xmlEscape(getReason()));
             sb.append("\" />");
             sb.append(System.getProperty("line.separator"));
             sb.append("<system-err>");
-            sb.append(StringEscapeUtils.escapeXml(Util.possiblyTrimStdio(false, ws, getStderrPattern())));
+            sb.append(hudson.Util.xmlEscape(Util.possiblyTrimStdio(false, ws, getStderrPattern())));
             sb.append("</system-err>");
             sb.append("<system-out>");
-            sb.append(StringEscapeUtils.escapeXml(Util.possiblyTrimStdio(false, ws, getLogPattern())));
+            sb.append(hudson.Util.xmlEscape(Util.possiblyTrimStdio(false, ws, getLogPattern())));
             sb.append("</system-out>");
         } else {
             sb.append("<system-out/>");
