@@ -36,7 +36,6 @@ import hudson.tasks.junit.SuiteResult;
 import hudson.tasks.test.MetaTabulatedResult;
 import hudson.tasks.test.TestObject;
 import hudson.tasks.test.TestResult;
-import org.apache.commons.lang.StringEscapeUtils;
 import org.kohsuke.stapler.Stapler;
 import org.kohsuke.stapler.StaplerRequest;
 import org.kohsuke.stapler.StaplerResponse;
@@ -481,7 +480,7 @@ public class QuestaVrmRegressionResult extends MetaTabulatedResult {
         if (logfile != null) {
 
             sb.append("<system-out>");
-            sb.append(StringEscapeUtils.escapeXml(Util.possiblyTrimStdio(false, ws, logfile)));
+            sb.append(hudson.Util.xmlEscape(Util.possiblyTrimStdio(false, ws, logfile)));
             sb.append("</system-out>");
             sb.append(System.getProperty("line.separator"));
         }
